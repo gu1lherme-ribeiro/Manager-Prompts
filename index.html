@@ -15,7 +15,17 @@
   </head>
   <body>
     <div class="app">
-      <aside class="sidebar"></aside>
+      <button class="icon-button open-toggle" id="btn-open">
+        <img src="./assets/open.svg" alt="Abrir Menu" class="icon" />
+      </button>
+      <aside class="sidebar">
+        <header class="sidebar-header">
+          <img src="./assets/logo.svg" alt="Logo" class="logo" />
+          <button class="icon-button" id="btn-collapse">
+            <img src="./assets/collapse.svg" alt="Fechar Menu" class="icon" />
+          </button>
+        </header>
+      </aside>
       <main class="main">
         <header class="main-header">
           <button id="btn-copy" class="btn-outline btn">
@@ -24,19 +34,38 @@
           </button>
           <button id="btn-save" class="btn-primary btn w-150">Salvar</button>
         </header>
-        <h1 id="prompt-title" class="prompt-title" contenteditable="true">
-          ⚡ Planejamento de tarefas semanais
-        </h1>
-        <div id="prompt-content" class="prompt-content" contenteditable="true">
-          Me ajude a organizar minha semana de forma equilibrada.<br />
-          Distribua minhas tarefas profissionais e pessoais em blocos de tempo
-          realistas.<br />
-          Sugira horários para foco profundo e momentos para pausas
-          estratégicas.<br />
-          Inclua dicas de priorização. No final, entregue o plano em formato de
-          checklist diário para fácil acompanhamento.
-        </p>
+
+        <div
+          data-placeholder="Título do prompt"
+          class="editable-wrapper"
+          id="title-wrapper"
+        >
+          <h1 id="prompt-title" class="prompt-title" contenteditable="true">
+            ⚡ Planejamento de tarefas semanais
+          </h1>
+        </div>
+
+        <div
+          data-placeholder="Conteúdo do prompt..."
+          class="editable-wrapper"
+          id="content-wrapper"
+        >
+          <div
+            id="prompt-content"
+            class="prompt-content"
+            contenteditable="true"
+          >
+            Me ajude a organizar minha semana de forma equilibrada.<br />
+            Distribua minhas tarefas profissionais e pessoais em blocos de tempo
+            realistas.<br />
+            Sugira horários para foco profundo e momentos para pausas
+            estratégicas.<br />
+            Inclua dicas de priorização. No final, entregue o plano em formato
+            de checklist diário para fácil acompanhamento.
+          </div>
+        </div>
       </main>
     </div>
+    <script src="./scripts.js"></script>
   </body>
 </html>
