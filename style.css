@@ -143,14 +143,14 @@ button {
 .editable-wrapper.is-empty::before {
     opacity: 1;
 }
-#title-wrapper .is-empty {
+#title-wrapper.is-empty {
     font-size: 32px;
     font-weight: 600;
     color: var(--gray-200);
 }
 
 #content-wrapper.is-empty::before {
-    font-size: 16px;
+    font-size: 17px;
     color: var(--gray-200);
     line-height: 32px;
 }
@@ -246,4 +246,72 @@ button {
     height: 1px;
     background-color: var(--gray-700);
     margin-bottom: 16px;
+}
+
+/* Estilos para o prompt-item */
+.prompt-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 16px;
+    max-height: calc(100vh - 220px);
+    overflow-y: auto;
+}
+
+.prompt-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+    margin-top: 20px;
+}
+
+.prompt-item-content {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+    flex: 1;
+}
+
+.prompt-item-title {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--white);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.prompt-item-description {
+    font-size: 12px;
+    color: var(--gray-100);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.btn-icon {
+    background: none;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    border-radius: 4px;
+    transition: background 0.2s;
+    height: 32px;
+    width: 32px;
+}
+
+.btn-icon:hover {
+    background-color: var(--gray-700);
+}
+
+.icon-trash path {
+    height: 24px;
+    width: 24px;
 }
