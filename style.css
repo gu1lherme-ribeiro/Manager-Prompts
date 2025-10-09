@@ -163,11 +163,15 @@ button {
 }
 
 .open-toggle {
-    position: absolute;
-    top: 62px;
-    left: 62px;
-    display: none;
+    position: fixed;
+  top: 24px;
+  left: 24px;
+  z-index: 0;
+  background: var(--gray-800);
+  border-radius: 50%;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
 }
+
 
 .sidebar {
     width: 400px;
@@ -318,7 +322,13 @@ button {
 
 @media (max-width: 768px) {
     .open-toggle {
-        display: block;
+       position: fixed;
+  top: 24px;
+  left: 24px;
+  z-index: 0;
+  background: var(--gray-800);
+  border-radius: 50%;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
     }
     .sidebar {
         display: none;
