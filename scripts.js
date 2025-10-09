@@ -177,7 +177,7 @@ elements.list.addEventListener("click", function (event){
   const prompt = state.prompts.find((p) => p.id === id)
   if(prompt){
     elements.promptTitle.textContent = prompt.title;
-    elements.promptContent.textContent = prompt.content;
+    elements.promptContent.innerHTML = prompt.content;
     updateAllEditableStates();
   }
 }

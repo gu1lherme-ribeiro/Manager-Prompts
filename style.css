@@ -315,3 +315,17 @@ button {
     height: 24px;
     width: 24px;
 }
+
+@media (max-width: 768px) {
+    .open-toggle {
+        display: block;
+    }
+    .sidebar {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        height: 100%;
+        width: 300px;
+    }
+}
