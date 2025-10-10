@@ -126,7 +126,7 @@ function createPromptItem(prompt) {
         <span class="prompt-item-description">${tmp.textContent}</span>
       </div>
       <button class="btn-icon" title="Remover" data-action="remove">
-        <img src="./assets/remove.svg" alt="Remover" class="icon icon-trash">
+        <img src="./src/assets/remove.svg" alt="Remover" class="icon icon-trash">
       </button>
     </li>
     `;
