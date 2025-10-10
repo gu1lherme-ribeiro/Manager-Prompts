@@ -20,6 +20,7 @@ const elements = {
   list: document.getElementById("prompt-list"),
   search: document.getElementById("search-input"),
   btnNew: document.getElementById("btn-new"),
+  btnCopy: document.getElementById("btn-copy"),
 };
 
 // Atualiza estado do wrapper com base no conteúdo do elemento editável
@@ -41,18 +42,18 @@ function closeSidebar() {
 
 // Atualiza estado de todos os elementos editáveis
 function updateAllEditableStates() {
-  updateEditableWrapperState(elements.promptTitle, elements.titleWrapper); //OK
-  updateEditableWrapperState(elements.promptContent, elements.contentWrapper); //OK
+  updateEditableWrapperState(elements.promptTitle, elements.titleWrapper);
+  updateEditableWrapperState(elements.promptContent, elements.contentWrapper);
 }
 
 // Anexa os handlers de input para atualizar estados em tempo real
 function attachAllEditableHandlers() {
   elements.promptTitle.addEventListener("input", function () {
-    updateEditableWrapperState(elements.promptTitle, elements.titleWrapper); //OK
+    updateEditableWrapperState(elements.promptTitle, elements.titleWrapper);
   });
 
   elements.promptContent.addEventListener("input", function () {
-    updateEditableWrapperState(elements.promptContent, elements.contentWrapper); //OK
+    updateEditableWrapperState(elements.promptContent, elements.contentWrapper);
   });
 }
 
@@ -73,12 +74,12 @@ function save() {
     alert("O título e o conteúdo são obrigatórios.");
     return;
   }
-  
+
   if (state.selectedId) {
     //Editando um prompt existente
     const existingPrompt = state.prompts.find((p) => p.id === state.selectedId);
-    if(existingPrompt){
-      existingPrompt.title = title || "Sem título" ;
+    if (existingPrompt) {
+      existingPrompt.title = title || "Sem título";
       existingPrompt.content = content || "Sem conteúdo";
     }
   } else {
@@ -116,8 +117,8 @@ function load() {
 }
 
 function createPromptItem(prompt) {
-  const tmp= document.createElement("div")
-  tmp.innerHTML = prompt.content
+  const tmp = document.createElement("div");
+  tmp.innerHTML = prompt.content;
   return `
       <li class="prompt-item" data-id="${prompt.id}" data-action ="select">
       <div class="prompt-item-content">
@@ -142,48 +143,70 @@ function renderList(filterText = "") {
   elements.list.innerHTML = filteredPrompts;
 }
 
-function newPrompt(){
+function newPrompt() {
   state.selectedId = null;
   elements.promptTitle.textContent = "";
   elements.promptContent.textContent = "";
   updateAllEditableStates();
-  elements.promptTitle.focus()
+  elements.promptTitle.focus();
 }
+async function copySelected() {
+  try {
+    const content = elements.promptContent;
 
+    // Verifica se há conteúdo para copiar
+    if (!content || !content.innerText.trim()) {
+      alert("Nenhum conteúdo para copiar.");
+      return;
+    }
+
+    // Verifica se o clipboard está disponível
+    if (!navigator.clipboard) {
+      alert("Clipboard não disponível neste navegador.");
+      return;
+    }
+
+    // Copia o texto
+    await navigator.clipboard.writeText(content.innerText);
+    alert("Conteúdo copiado com sucesso!");
+  } catch (error) {
+    console.error("Erro ao copiar para a área de transferência:", error);
+    alert("Erro ao copiar. Por favor, tente novamente.");
+  }
+}
 //Eventos
 elements.btnSave.addEventListener("click", save);
-elements.btnNew.addEventListener("click",newPrompt)
+elements.btnNew.addEventListener("click", newPrompt);
+elements.btnCopy.addEventListener("click", copySelected);
 
 elements.search.addEventListener("input", function (event) {
   renderList(event.target.value);
 });
 
-elements.list.addEventListener("click", function (event){
-  const removeBtn= event.target.closest ("[data-action='remove']")
-  const item= event.target.closest("[data-id]")
-  
-  if(!item) return;
+elements.list.addEventListener("click", function (event) {
+  const removeBtn = event.target.closest("[data-action='remove']");
+  const item = event.target.closest("[data-id]");
 
-  const id = item.getAttribute ("data-id")
+  if (!item) return;
+
+  const id = item.getAttribute("data-id");
   state.selectedId = id;
-  
-  if (removeBtn){
+
+  if (removeBtn) {
     state.prompts = state.prompts.filter((p) => p.id !== id);
     renderList();
     persist();
     return;
   }
-  if(event.target.closest("[data-action='select']")){
-  const prompt = state.prompts.find((p) => p.id === id)
-  if(prompt){
-    elements.promptTitle.textContent = prompt.title;
-    elements.promptContent.innerHTML = prompt.content;
-    updateAllEditableStates();
+  if (event.target.closest("[data-action='select']")) {
+    const prompt = state.prompts.find((p) => p.id === id);
+    if (prompt) {
+      elements.promptTitle.textContent = prompt.title;
+      elements.promptContent.innerHTML = prompt.content;
+      updateAllEditableStates();
+    }
   }
-}
-})
-
-
+});
 
 // Inicialização da aplicação
 function init() {

@@ -164,7 +164,7 @@ button {
 
 .open-toggle {
     position: fixed;
-  top: 24px;
+  top: 38px;
   left: 24px;
   z-index: 0;
   background: var(--gray-800);
@@ -323,7 +323,7 @@ button {
 @media (max-width: 768px) {
     .open-toggle {
        position: fixed;
-  top: 24px;
+  top: 38px;
   left: 24px;
   z-index: 0;
   background: var(--gray-800);
@@ -337,5 +337,14 @@ button {
         left: 0;
         height: 100%;
         width: 300px;
+        z-index: 1000;
+    }
+    .sidebar.open {
+        transform: translateX(0);
+    }
+    .main{
+       padding: 24px 32px;
+       margin-left: 0;
+       overflow-y: auto;
     }
 }
