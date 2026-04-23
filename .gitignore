@@ -4,3 +4,7 @@ Settings/settings.local.json
 *.env.local
 node_modules/
 dist/
+
+# Arquivos de contexto do Claude (locais, não versionados)
+CLAUDE.md
+.impeccable.md

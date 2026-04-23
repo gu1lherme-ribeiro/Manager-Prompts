@@ -1,84 +1,181 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pt-BR">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="dark light" />
     <link rel="icon" type="image/svg+xml" href="./src/assets/favicon.svg" />
     <link rel="stylesheet" href="./src/css/style.css" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Red+Hat+Mono:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap"
       rel="stylesheet"
     />
-    <title>Manager Prompt</title>
+    <title>manager-prompts</title>
   </head>
   <body>
     <div class="app">
-      <button class="icon-button open-toggle" id="btn-open">
-        <img src="./src/assets/open.svg" alt="Abrir Menu" class="icon" />
-      </button>
-      <aside class="sidebar">
-        <header class="sidebar-header">
-          <img src="./src/assets/logo.svg" alt="Logo" class="logo" />
-          <button class="icon-button" id="btn-collapse">
-            <img src="./src/assets/collapse.svg" alt="Fechar Menu" class="icon" />
+      <div class="sidebar-backdrop" id="sidebar-backdrop" aria-hidden="true"></div>
+      <aside class="sidebar" id="sidebar" aria-label="Lista de prompts">
+        <header class="sidebar-head">
+          <div class="wordmark">
+            <h1 class="wordmark-name">manager<span class="wordmark-dash">-</span>prompts</h1>
+            <p class="wordmark-meta">
+              <span id="wordmark-count">0 itens</span>
+            </p>
+          </div>
+          <button
+            class="icon-btn"
+            id="btn-collapse"
+            type="button"
+            aria-label="Recolher lista"
+            title="Recolher"
+          >
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 14 14"
+              fill="none"
+              aria-hidden="true"
+            >
+              <path
+                d="M9 3 L4 7 L9 11"
+                stroke="currentColor"
+                stroke-width="1.3"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
           </button>
         </header>
-        <div class="sidebar-content">
-          <div class="search-container">
-            <img
-              src="./src/assets/search.svg"
-              alt="Buscar"
-              class="icon search-icon"
-            />
+
+        <section class="search-block" aria-label="Buscar">
+          <div class="search-field">
+            <span class="search-prefix" aria-hidden="true">/</span>
             <input
-              type="text"
-              class="search-input"
+              type="search"
               id="search-input"
-              placeholder="Buscar Prompts"
+              class="search-input"
+              placeholder="buscar…"
+              autocomplete="off"
+              spellcheck="false"
             />
-            <button class="btn-primary btn btn-full" id="btn-new">
-              Novo Prompt
+          </div>
+          <button type="button" class="action-new" id="btn-new">
+            <span class="action-new-sign" aria-hidden="true">+</span>
+            <span>novo prompt</span>
+          </button>
+        </section>
+
+        <nav class="toc" aria-label="Prompts salvos">
+          <ol class="toc-list" id="prompt-list" role="listbox" aria-label="Prompts"></ol>
+          <div class="toc-empty" id="toc-empty" hidden>
+            <p class="toc-empty-title">vazio</p>
+            <p class="toc-empty-hint">
+              Crie o primeiro prompt à direita — título, conteúdo, salvar.
+            </p>
+          </div>
+          <div class="toc-empty" id="toc-empty-search" hidden>
+            <p class="toc-empty-title">sem resultado</p>
+            <p class="toc-empty-hint">Limpe a busca para ver todos os itens.</p>
+          </div>
+        </nav>
+
+        <footer class="sidebar-foot">
+          <div
+            class="theme-switch"
+            role="radiogroup"
+            aria-label="Tema de exibição"
+          >
+            <span class="theme-switch-label">tema:</span>
+            <button
+              type="button"
+              class="theme-option"
+              role="radio"
+              data-theme="light"
+              aria-checked="false"
+            >
+              light
+            </button>
+            <span class="theme-switch-sep" aria-hidden="true">·</span>
+            <button
+              type="button"
+              class="theme-option"
+              role="radio"
+              data-theme="dark"
+              aria-checked="false"
+            >
+              dark
             </button>
           </div>
-          <ul class="prompt-list" id="prompt-list"></ul>
-        </div>
+        </footer>
       </aside>
+
       <main class="main">
-        <header class="main-header">
-          <button id="btn-copy" class="btn-outline btn">
-            <img src="./src/assets/copy.svg" alt="copiar" class="icon" />
-            <span>Copiar</span>
-          </button>
-          <button id="btn-save" class="btn-primary btn w-150">Salvar</button>
+        <header class="main-head">
+          <div class="main-head-left">
+            <button
+              class="sidebar-reopen"
+              id="btn-open"
+              type="button"
+              aria-label="Abrir lista"
+            >
+              <span aria-hidden="true" class="sidebar-reopen-caret">❯</span>
+              <span>lista</span>
+            </button>
+            <p class="main-status" id="main-meta">
+              <span class="main-status-prefix" aria-hidden="true">$</span>
+              <span class="main-status-text">novo prompt</span>
+            </p>
+          </div>
+          <div class="main-actions">
+            <button type="button" class="btn-ghost" id="btn-copy">
+              copiar
+            </button>
+            <button type="button" class="btn-primary" id="btn-save">
+              salvar
+            </button>
+          </div>
         </header>
 
-        <div
-          data-placeholder="Título do prompt"
-          class="editable-wrapper"
-          id="title-wrapper"
-        >
-          <h1
-            id="prompt-title"
-            class="prompt-title"
-            contenteditable="true"
-          ></h1>
-        </div>
-
-        <div
-          data-placeholder="Conteúdo do prompt..."
-          class="editable-wrapper"
-          id="content-wrapper"
-        >
+        <article class="editor">
           <div
-            id="prompt-content"
-            class="prompt-content"
-            contenteditable="true"
-          ></div>
-        </div>
+            class="editable-wrapper editable-wrapper--title"
+            id="title-wrapper"
+            data-placeholder="Título"
+          >
+            <h2
+              id="prompt-title"
+              class="prompt-title"
+              contenteditable="true"
+              spellcheck="false"
+            ></h2>
+          </div>
+
+          <div
+            class="editable-wrapper editable-wrapper--content"
+            id="content-wrapper"
+            data-placeholder="escreva o prompt aqui"
+          >
+            <div
+              id="prompt-content"
+              class="prompt-content"
+              contenteditable="true"
+            ></div>
+          </div>
+        </article>
+
       </main>
     </div>
+
+    <div
+      class="toast-region"
+      id="toast-region"
+      aria-live="polite"
+      aria-atomic="true"
+    ></div>
+
     <script src="./src/js/scripts.js"></script>
   </body>
 </html>
