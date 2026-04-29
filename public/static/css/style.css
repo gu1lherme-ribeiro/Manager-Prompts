@@ -1,0 +1,4227 @@
+/* ==========================================================================
+   manager-prompts — dev-tool opinionada, dark-first
+   Tipografia: Red Hat Mono (conteúdo) + Hanken Grotesk (chrome).
+   Acento único: âmbar-terminal ~oklch(78% 0.14 78).
+   Referência: Warp Terminal, Linear, Zed.
+   ========================================================================== */
+
+:root {
+  color-scheme: dark light;
+
+  /* Tipografia -------------------------------------------------------------- */
+  --font-mono: "Red Hat Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --font-sans: "Hanken Grotesk", system-ui, -apple-system, Segoe UI, sans-serif;
+
+  /* Escala fixa rem — UI, densa */
+  --fs-2xs:  0.6875rem;  /* 11 */
+  --fs-xs:   0.75rem;    /* 12 */
+  --fs-sm:   0.8125rem;  /* 13 */
+  --fs-base: 0.875rem;   /* 14 */
+  --fs-md:   1rem;       /* 16 */
+  --fs-lg:   1.125rem;   /* 18 */
+  --fs-xl:   1.375rem;   /* 22 */
+  --fs-2xl:  1.75rem;    /* 28 — título do prompt */
+
+  --lh-tight: 1.15;
+  --lh-snug:  1.35;
+  --lh-body:  1.55;
+  --lh-mono:  1.6;
+
+  /* Espaço — 4pt -------------------------------------------------------- */
+  --space-2xs: 0.25rem;    /* 4 */
+  --space-xs:  0.5rem;     /* 8 */
+  --space-sm:  0.75rem;    /* 12 */
+  --space-md:  1rem;       /* 16 */
+  --space-lg:  1.25rem;    /* 20 */
+  --space-xl:  2rem;       /* 32 */
+  --space-2xl: 3rem;       /* 48 */
+  --space-3xl: 4rem;       /* 64 */
+
+  /* Motion -------------------------------------------------------------- */
+  --ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);
+  --ease-out-expo:  cubic-bezier(0.16, 1, 0.3, 1);
+  --dur-instant: 80ms;
+  --dur-fast:    140ms;
+  --dur-base:    220ms;
+  --dur-slow:    360ms;
+
+  /* Layout -------------------------------------------------------------- */
+  --sidebar-w: clamp(300px, 22vw, 360px);
+  /* Gutter horizontal único pra todos os blocos da sidebar (head/search/toc/foot).
+     Trocar aqui ajusta o layout inteiro sem revisitar 4 regras. */
+  --sidebar-pad-x: var(--space-lg);
+  /* Largura da scrollbar (== ::-webkit-scrollbar.width). Usado pra compensar
+     o gutter reservado por scrollbar-gutter:stable no .toc — assim o texto
+     dos itens alinha com o resto da sidebar mesmo com a barra visível. */
+  --scroll-gutter: 8px;
+
+  /* Altura confiável: dvh evita salto quando barras do iOS Safari aparecem.
+     Fallback explícito pra navegadores sem dvh (Safari < 15.4). */
+  --app-h: 100vh;
+  --app-h: 100dvh;
+
+  /* Tamanho mínimo de alvo de toque — usado em (pointer: coarse).
+     44px é o piso WCAG/Apple/Material para superfícies tocáveis. */
+  --tap: 44px;
+}
+
+/* Dark (padrão) ---------------------------------------------------------- */
+:root,
+:root[data-theme="dark"] {
+  --bg:           oklch(18% 0.011 250);
+  --bg-elev:      oklch(22% 0.012 250);
+  --bg-sunk:      oklch(14% 0.010 250);
+  --bg-hover:     oklch(26% 0.013 250);
+  --bg-selected:  oklch(28% 0.042 80);
+
+  --ink-1:        oklch(95% 0.008 85);
+  --ink-2:        oklch(78% 0.010 85);
+  --ink-3:        oklch(58% 0.012 85);
+  --ink-4:        oklch(42% 0.014 85);
+
+  --rule:         oklch(30% 0.012 250);
+  --rule-strong:  oklch(40% 0.014 250);
+
+  --accent:       oklch(80% 0.14 78);
+  --accent-hover: oklch(85% 0.14 78);
+  --accent-on:    oklch(16% 0.011 250);
+  --accent-dim:   oklch(55% 0.10 78);
+
+  --danger:       oklch(70% 0.18 28);
+  --focus-ring:   oklch(80% 0.14 78);
+
+  --shadow-card:  0 1px 0 oklch(14% 0.010 250), 0 10px 32px -20px oklch(0% 0 0 / 0.6);
+}
+
+/* Light (opcional, via toggle) ------------------------------------------ */
+:root[data-theme="light"] {
+  --bg:           oklch(97% 0.005 250);
+  --bg-elev:      oklch(94% 0.008 250);
+  --bg-sunk:      oklch(91% 0.010 250);
+  --bg-hover:     oklch(90% 0.012 250);
+  --bg-selected:  oklch(90% 0.055 75);
+
+  --ink-1:        oklch(20% 0.012 250);
+  --ink-2:        oklch(36% 0.014 250);
+  --ink-3:        oklch(52% 0.015 250);
+  --ink-4:        oklch(66% 0.016 250);
+
+  --rule:         oklch(86% 0.010 250);
+  --rule-strong:  oklch(76% 0.012 250);
+
+  --accent:       oklch(55% 0.15 65);
+  --accent-hover: oklch(50% 0.16 65);
+  --accent-on:    oklch(98% 0.005 250);
+  --accent-dim:   oklch(68% 0.12 70);
+
+  --danger:       oklch(52% 0.18 25);
+  --focus-ring:   oklch(55% 0.15 65);
+
+  --shadow-card:  0 1px 0 oklch(88% 0.010 250), 0 10px 32px -20px oklch(30% 0.015 250 / 0.25);
+}
+
+/* Segue sistema quando usuário não escolheu explicitamente --------------- */
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    --bg:           oklch(97% 0.005 250);
+    --bg-elev:      oklch(94% 0.008 250);
+    --bg-sunk:      oklch(91% 0.010 250);
+    --bg-hover:     oklch(90% 0.012 250);
+    --bg-selected:  oklch(90% 0.055 75);
+    --ink-1:        oklch(20% 0.012 250);
+    --ink-2:        oklch(36% 0.014 250);
+    --ink-3:        oklch(52% 0.015 250);
+    --ink-4:        oklch(66% 0.016 250);
+    --rule:         oklch(86% 0.010 250);
+    --rule-strong:  oklch(76% 0.012 250);
+    --accent:       oklch(55% 0.15 65);
+    --accent-hover: oklch(50% 0.16 65);
+    --accent-on:    oklch(98% 0.005 250);
+    --accent-dim:   oklch(68% 0.12 70);
+    --danger:       oklch(52% 0.18 25);
+    --focus-ring:   oklch(55% 0.15 65);
+    --shadow-card:  0 1px 0 oklch(88% 0.010 250), 0 10px 32px -20px oklch(30% 0.015 250 / 0.25);
+  }
+}
+
+/* ==========================================================================
+   Reset e base
+   ========================================================================== */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+/* Scroll lock no body quando o drawer está aberto em mobile.
+   overscroll-behavior contém o rubber-band do iOS sem usar touch-action: none
+   (que cascateia para descendentes e mata o scroll do .toc dentro do drawer). */
+body.drawer-open {
+  overflow: hidden;
+  overscroll-behavior: contain;
+}
+
+html {
+  font-size: 16px;
+  -webkit-text-size-adjust: 100%;
+  /* Defensivo: nada deve poder rolar horizontalmente o documento. */
+  overflow-x: hidden;
+}
+
+body {
+  /* Casca travada no viewport: só o .main rola internamente. Sem isso, o
+     conteúdo do main empurra o body, vira scroll de página, e a sidebar
+     (que é coluna do grid) sobe junto da rolagem. */
+  height: var(--app-h);
+  background: var(--bg);
+  color: var(--ink-1);
+  font-family: var(--font-sans);
+  overflow: hidden;
+  font-size: var(--fs-base);
+  line-height: var(--lh-body);
+  font-feature-settings: "kern", "liga", "calt";
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  transition: background-color var(--dur-base) var(--ease-out-quart),
+    color var(--dur-base) var(--ease-out-quart);
+}
+
+::selection {
+  background: color-mix(in oklch, var(--accent) 32%, transparent);
+  color: var(--ink-1);
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: color-mix(in oklch, var(--rule-strong) 60%, transparent);
+  border-radius: 999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--rule-strong);
+}
+
+:focus-visible {
+  outline: 1px solid var(--focus-ring);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+/* ==========================================================================
+   Aplicação (grid principal)
+   ========================================================================== */
+
+.app {
+  display: grid;
+  /* minmax(0, 1fr) impede que o min-content do .main (header com 4 botões +
+     popover) infle a coluna além do espaço disponível em viewports estreitos
+     antes do drawer mode (861-960px). Sem isso, o overflow-x:hidden em html/body
+     mascara o sintoma cortando conteúdo. */
+  grid-template-columns: var(--sidebar-w) minmax(0, 1fr);
+  height: var(--app-h);
+  width: 100%;
+  transition: grid-template-columns var(--dur-base) var(--ease-out-expo);
+}
+
+/* ==========================================================================
+   Sidebar
+   ========================================================================== */
+
+.sidebar {
+  /* Flex column > grid pra esse padrão "head/projects/search + .toc rolável +
+     foot": o flex-grow:1 + min-height:0 no .toc é o idiom canônico de scroller
+     interno e funciona consistente em todos os browsers. A versão grid com
+     `1fr` infla com o conteúdo (track auto-min do conteúdo) e o overflow do
+     .toc nunca dispara — viramos pra flex pra eliminar a categoria. */
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+  padding: var(--space-lg) 0 var(--space-md);
+  background: var(--bg-elev);
+  border-right: 1px solid var(--rule);
+  /* Altura travada na row do grid pai (.app é 100dvh).
+     Sem sticky: a casca já não rola, então a sidebar fica fixa por estrutura. */
+  height: 100%;
+  /* clip > hidden: corte estrito sem criar formatting context de scroll.
+     Combinado com a opacidade aplicada nos filhos durante o colapso (no bloco
+     .app.sidebar-closed mais abaixo), elimina o "rasgo" da transição quando
+     a coluna do grid encolhe mais rápido do que os filhos refluxam. */
+  overflow: clip;
+  /* inline-size container — head/search/toc/foot adaptam ao próprio width
+     da sidebar (280px tablet desktop ≈ 281px drawer narrow), sem regras
+     duplicadas por viewport. Ver bloco @container abaixo no Responsivo. */
+  container-type: inline-size;
+  container-name: sidebar;
+}
+
+/* Cabeçalho (wordmark) -------------------------------------------------- */
+.sidebar-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 var(--sidebar-pad-x);
+  gap: var(--space-sm);
+}
+
+.wordmark {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  min-width: 0;
+}
+
+.wordmark-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.wordmark-name {
+  font-family: var(--font-mono);
+  font-size: var(--fs-2xl);
+  font-weight: 600;
+  color: var(--ink-1);
+  letter-spacing: -0.01em;
+  line-height: 1.05;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin: 0;
+}
+
+.wordmark-dash {
+  color: var(--accent);
+}
+
+.wordmark-meta {
+  font-family: var(--font-mono);
+  font-size: var(--fs-2xs);
+  color: var(--ink-3);
+  letter-spacing: 0.02em;
+  line-height: 1;
+}
+
+/* Ícone de botão (ghost) ---------------------------------------------- */
+.icon-btn {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  background: transparent;
+  /* Resting com border sutil em vez de transparente — afirma o alvo clicável
+     no canto da sidebar sem usar acento. Hover/active reforçam. */
+  border: 1px solid var(--rule);
+  border-radius: 3px;
+  color: var(--ink-2);
+  cursor: pointer;
+  transition: color var(--dur-fast) var(--ease-out-quart),
+    background-color var(--dur-fast) var(--ease-out-quart),
+    border-color var(--dur-fast) var(--ease-out-quart);
+}
+
+/* Desktop: ancora o botão na primeira linha do wordmark, não no centro
+   geométrico do grupo wordmark+meta. align-items:center deixava o botão
+   ~10px abaixo do centro óptico do .wordmark-name (que cresceu pra fs-2xl
+   28px); align-self:start + margin-top:1px alinha contra o centro da heading
+   (fs-2xl 28px × line-height 1.05 / 2 ≈ 14.7 ≈ centro do botão 14px + 1px).
+   Mobile (≤860px) tem override próprio que zera essas duas regras —
+   lá o botão vira labeled 44px e centra normalmente contra o grupo. */
+@media (min-width: 861px) {
+  .sidebar-head .icon-btn {
+    align-self: start;
+    margin-top: 1px;
+  }
+}
+
+.icon-btn:hover {
+  color: var(--ink-1);
+  background: var(--bg-hover);
+  border-color: var(--rule-strong);
+}
+
+.icon-btn:active {
+  background: var(--bg-sunk);
+  border-color: var(--rule-strong);
+  color: var(--ink-1);
+}
+
+/* Glifo mono no lugar de SVG — alinha com vocabulário (❯ no reopen, no toc,
+   $ no status, // nos prefixos). Cor accent espelha o .sidebar-reopen-caret
+   (❯) e o .wordmark-dash (-) — controles de colapso/identidade compartilham
+   o mesmo acento âmbar, dando coerência visual ao toggle aberto/fechado.
+   Hover/active nudge para a esquerda — sugere "para onde a sidebar vai".
+   Peso 700 dá ao glifo a mesma densidade visual do SVG anterior. */
+.icon-btn-glyph {
+  font-family: var(--font-mono);
+  font-size: var(--fs-md);
+  font-weight: 700;
+  line-height: 1;
+  color: var(--accent);
+  display: inline-block;
+  transition: transform var(--dur-fast) var(--ease-out-quart);
+}
+
+.icon-btn:hover .icon-btn-glyph {
+  transform: translateX(-2px);
+}
+
+.icon-btn:active .icon-btn-glyph {
+  transform: translateX(-3px);
+}
+
+/* Busca + botão novo --------------------------------------------------- */
+.search-block {
+  display: flex;
+  flex-direction: column;
+  padding: 0 var(--sidebar-pad-x);
+  gap: var(--space-sm);
+}
+
+.search-field {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: 6px var(--space-xs);
+  background: var(--bg);
+  border: 1px solid var(--rule);
+  border-radius: 3px;
+  transition: border-color var(--dur-fast) var(--ease-out-quart),
+    background-color var(--dur-fast) var(--ease-out-quart);
+}
+
+.search-field:focus-within {
+  border-color: var(--rule-strong);
+  background: var(--bg-sunk);
+}
+
+.search-prefix {
+  font-family: var(--font-mono);
+  font-size: var(--fs-sm);
+  color: var(--ink-4);
+  line-height: 1;
+  user-select: none;
+  transition: color var(--dur-fast) var(--ease-out-quart);
+}
+
+.search-field:focus-within .search-prefix {
+  color: var(--ink-3);
+}
+
+.search-input {
+  font-family: var(--font-mono);
+  font-size: var(--fs-sm);
+  color: var(--ink-1);
+  background: transparent;
+  border: 0;
+  outline: none;
+  width: 100%;
+  min-width: 0;
+  padding: 0;
+  line-height: 1.3;
+}
+
+.search-input::placeholder {
+  color: var(--ink-4);
+}
+
+.search-input::-webkit-search-cancel-button {
+  display: none;
+}
+
+/* Botão "novo prompt" — texto sans, não primário ---------------------- */
+.action-new {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--space-xs);
+  padding: var(--space-xs) 0;
+  background: transparent;
+  border: 0;
+  font-family: var(--font-sans);
+  font-size: var(--fs-sm);
+  font-weight: 500;
+  color: var(--ink-2);
+  cursor: pointer;
+  text-align: left;
+  transition: color var(--dur-fast) var(--ease-out-quart);
+  align-self: flex-start;
+}
+
+.action-new:hover,
+.action-new:focus-visible {
+  color: var(--ink-1);
+}
+
+.action-new:active .action-new-sign {
+  transform: translateY(1px);
+}
+
+/* Sign mono em peso de chrome — alinhado por baseline com o label sans.
+   Sem hacks de line-height/top: parent .action-new align-items: baseline
+   resolve a centralização óptica naturalmente. */
+.action-new-sign {
+  font-family: var(--font-mono);
+  color: var(--accent);
+  font-size: var(--fs-md);
+  font-weight: 600;
+  line-height: 1;
+  transition: transform var(--dur-fast) var(--ease-out-quart);
+}
+
+/* ==========================================================================
+   Projects — rail de filtro por pasta
+   --------------------------------------------------------------------------
+   Cada linha = uma pasta. As duas primeiras são virtuais (todos / sem projeto)
+   e o resto vem do backend. Selecionado pinta a barra à esquerda em âmbar,
+   espelhando o tratamento dos prompts no toc — coerência entre os dois "níveis"
+   da hierarquia (pasta → prompt).
+   ========================================================================== */
+
+.projects-block {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2xs);
+  padding: 0 var(--sidebar-pad-x);
+  /* Cap conservador: até ~6 itens visíveis sem scroll. Acima disso, o rail
+     scrolla internamente, mantendo o toc com a maior parte da real estate. */
+  min-height: 0;
+}
+
+.projects-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 var(--space-2xs);
+  user-select: none;
+}
+
+.projects-head-label {
+  font-family: var(--font-mono);
+  font-size: var(--fs-2xs);
+  color: var(--ink-4);
+  letter-spacing: 0.04em;
+  text-transform: lowercase;
+  line-height: 1;
+}
+
+.projects-add-btn {
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 2px;
+  font-family: var(--font-mono);
+  font-size: var(--fs-md);
+  font-weight: 600;
+  line-height: 1;
+  color: var(--ink-3);
+  cursor: pointer;
+  transition: color var(--dur-fast) var(--ease-out-quart),
+    background-color var(--dur-fast) var(--ease-out-quart),
+    border-color var(--dur-fast) var(--ease-out-quart);
+}
+
+.projects-add-btn:hover,
+.projects-add-btn:focus-visible {
+  color: var(--accent);
+  background: var(--bg-hover);
+  border-color: var(--rule);
+  outline: none;
+}
+
+.projects-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  max-height: 38vh;
+  overflow-y: auto;
+  /* Scrollbar discreta — herda os estilos do toc se houver, mas não vaza
+     overflow horizontal. */
+  overscroll-behavior: contain;
+  margin: 0;
+  padding: 0;
+}
+
+/* Filter input — só aparece a partir de PROJECTS_FILTER_THRESHOLD projetos.
+   Compartilha vocabulário com .search-field (mesma altura, mesmo prefixo /),
+   mas em fundo recolhido (var(--bg)) e fonte menor pra ficar subordinado à
+   busca de prompts no bloco abaixo. */
+.projects-filter {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: 4px var(--space-xs);
+  background: var(--bg);
+  border: 1px solid var(--rule);
+  border-radius: 3px;
+  transition: border-color var(--dur-fast) var(--ease-out-quart),
+    background-color var(--dur-fast) var(--ease-out-quart);
+}
+
+.projects-filter:focus-within {
+  border-color: var(--rule-strong);
+  background: var(--bg-sunk);
+}
+
+.projects-filter-prefix {
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  color: var(--ink-4);
+  line-height: 1;
+  width: 1ch;
+  user-select: none;
+  transition: color var(--dur-fast) var(--ease-out-quart);
+}
+
+.projects-filter:focus-within .projects-filter-prefix {
+  color: var(--ink-3);
+}
+
+.projects-filter-input {
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  color: var(--ink-1);
+  background: transparent;
+  border: 0;
+  outline: none;
+  padding: 0;
+  line-height: 1.35;
+  width: 100%;
+  min-width: 0;
+}
+
+.projects-filter-input::placeholder {
+  color: var(--ink-4);
+}
+
+.projects-filter-input::-webkit-search-cancel-button {
+  display: none;
+}
+
+/* Estado vazio do filtro — mensagem mono curta, sem decoração. */
+.projects-empty {
+  list-style: none;
+  font-family: var(--font-mono);
+  font-size: var(--fs-2xs);
+  color: var(--ink-4);
+  padding: var(--space-xs) var(--space-xs);
+  letter-spacing: 0.02em;
+}
+
+/* Disclosure "ver todos / ver menos" — botão ghost no vocabulário do app
+   (// prefix). Discreto por default, ganha cor no hover. */
+.projects-disclosure {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--space-xs);
+  padding: 4px var(--space-xs);
+  margin-top: var(--space-2xs);
+  background: transparent;
+  border: 0;
+  font-family: var(--font-mono);
+  font-size: var(--fs-2xs);
+  color: var(--ink-4);
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  text-align: left;
+  align-self: flex-start;
+  transition: color var(--dur-fast) var(--ease-out-quart);
+  border-radius: 2px;
+}
+
+.projects-disclosure:hover,
+.projects-disclosure:focus-visible {
+  color: var(--ink-2);
+  outline: none;
+}
+
+.projects-disclosure:focus-visible {
+  box-shadow: inset 0 0 0 1px var(--focus-ring);
+}
+
+.projects-disclosure-prefix {
+  color: var(--ink-4);
+  user-select: none;
+  font-weight: 400;
+}
+
+.projects-disclosure[aria-expanded="true"] .projects-disclosure-prefix {
+  color: var(--accent-dim);
+}
+
+.projects-item {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  column-gap: var(--space-xs);
+  padding: 4px var(--space-xs);
+  cursor: pointer;
+  background: transparent;
+  border-left: 2px solid transparent;
+  outline: none;
+  transition: background-color var(--dur-fast) var(--ease-out-quart);
+}
+
+.projects-item:hover,
+.projects-item:focus-visible {
+  background: var(--bg-hover);
+}
+
+.projects-item:focus-visible {
+  box-shadow: inset 0 0 0 1px var(--focus-ring);
+}
+
+.projects-item.is-selected,
+.projects-item.is-selected:hover,
+.projects-item.is-selected:focus-visible {
+  background: var(--bg-selected);
+  border-left-color: var(--accent);
+}
+
+.projects-item-prefix {
+  font-family: var(--font-mono);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  color: var(--ink-3);
+  line-height: 1.35;
+  width: 1ch;
+  user-select: none;
+  transition: color var(--dur-fast) var(--ease-out-quart);
+}
+
+.projects-item:hover .projects-item-prefix {
+  color: var(--ink-2);
+}
+
+.projects-item.is-selected .projects-item-prefix {
+  color: var(--accent);
+}
+
+.projects-item-name {
+  font-family: var(--font-mono);
+  font-size: var(--fs-sm);
+  font-weight: 500;
+  color: var(--ink-1);
+  line-height: 1.35;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  /* duplo-clique inicia rename — cursor sugere ação */
+}
+
+.projects-item-name[data-action="rename-project"] {
+  cursor: text;
+}
+
+.projects-item-count {
+  font-family: var(--font-mono);
+  font-size: var(--fs-2xs);
+  color: var(--ink-4);
+  letter-spacing: 0.02em;
+  font-variant-numeric: tabular-nums;
+  user-select: none;
+  transition: color var(--dur-fast) var(--ease-out-quart);
+  /* Reserva espaço pra o "×" sem fazer o número saltar no hover. */
+  padding-right: var(--space-md);
+}
+
+.projects-item.is-selected .projects-item-count {
+  color: var(--accent-dim);
+}
+
+/* "×" só aparece no hover do item — espelha o padrão do toc-item-remove. */
+.projects-item-remove {
+  position: absolute;
+  top: 50%;
+  right: var(--space-2xs);
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  border-radius: 2px;
+  font-family: var(--font-mono);
+  font-size: var(--fs-sm);
+  font-weight: 500;
+  color: var(--ink-4);
+  line-height: 1;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity var(--dur-fast) var(--ease-out-quart),
+    color var(--dur-fast) var(--ease-out-quart),
+    background-color var(--dur-fast) var(--ease-out-quart);
+}
+
+.projects-item:hover .projects-item-remove,
+.projects-item:focus-visible .projects-item-remove,
+.projects-item-remove:focus-visible {
+  opacity: 1;
+}
+
+.projects-item-remove:hover {
+  color: var(--danger);
+  background: color-mix(in oklch, var(--danger) 14%, transparent);
+}
+
+@media (hover: none) {
+  .projects-item-remove {
+    opacity: 1;
+  }
+}
+
+/* Form inline pra criar projeto — aparece logo abaixo da lista. */
+.projects-new {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: var(--space-xs);
+  margin-top: var(--space-2xs);
+  padding: 4px var(--space-xs);
+  border-left: 2px solid var(--accent);
+  background: var(--bg-sunk);
+}
+
+.projects-new-prefix {
+  font-family: var(--font-mono);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  color: var(--accent);
+  line-height: 1.35;
+  width: 1ch;
+  user-select: none;
+}
+
+.projects-new-input,
+.projects-item-rename-input {
+  font-family: var(--font-mono);
+  font-size: var(--fs-sm);
+  font-weight: 500;
+  color: var(--ink-1);
+  background: transparent;
+  border: 0;
+  outline: none;
+  padding: 0;
+  line-height: 1.35;
+  width: 100%;
+  min-width: 0;
+}
+
+.projects-new-input::placeholder {
+  color: var(--ink-4);
+}
+
+/* O input de rename ocupa a célula do nome dentro do mesmo grid do item. */
+.projects-item-rename-input {
+  grid-column: 2;
+  font-weight: 500;
+}
+
+/* Estados de drop --------------------------------------------------------
+   .is-drop-target → solta-aqui pra mover prompt (preenche o item em âmbar
+   tênue, espelha is-selected mas com borda mais forte).
+   .is-drop-before / .is-drop-after → pseudo-elemento desenha uma régua
+   âmbar acima/abaixo do item, vocabulário comum de file-tree (VSCode/Linear).
+*/
+.projects-item.is-drop-target {
+  background: color-mix(in oklch, var(--accent) 22%, var(--bg-elev));
+  border-left-color: var(--accent);
+}
+
+.projects-item.is-drop-before::before,
+.projects-item.is-drop-after::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--accent);
+  pointer-events: none;
+}
+
+.projects-item.is-drop-before::before {
+  top: -1px;
+}
+
+.projects-item.is-drop-after::after {
+  bottom: -1px;
+}
+
+/* Popover de mover prompt — anexado ao body, posicionado por JS.
+   Densidade alta, vocabulário do app (// hint, / prefix). */
+.move-popover {
+  position: fixed;
+  z-index: 50;
+  min-width: 220px;
+  max-width: 280px;
+  max-height: 60vh;
+  overflow-y: auto;
+  background: var(--bg-elev);
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  box-shadow: var(--shadow-card);
+  padding: var(--space-2xs) 0;
+}
+
+.move-popover-hint {
+  font-family: var(--font-mono);
+  font-size: var(--fs-2xs);
+  color: var(--ink-4);
+  letter-spacing: 0.04em;
+  padding: var(--space-2xs) var(--space-sm);
+  margin: 0;
+}
+
+.move-popover-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+}
+
+.move-popover-option {
+  width: 100%;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: 6px var(--space-sm);
+  background: transparent;
+  border: 0;
+  border-left: 2px solid transparent;
+  font-family: var(--font-mono);
+  font-size: var(--fs-sm);
+  font-weight: 500;
+  color: var(--ink-1);
+  text-align: left;
+  cursor: pointer;
+  transition: background-color var(--dur-fast) var(--ease-out-quart);
+}
+
+.move-popover-option:hover:not(:disabled),
+.move-popover-option:focus-visible:not(:disabled) {
+  background: var(--bg-hover);
+  outline: none;
+}
+
+.move-popover-option:focus-visible {
+  border-left-color: var(--accent);
+}
+
+.move-popover-option.is-current,
+.move-popover-option:disabled {
+  color: var(--ink-3);
+  cursor: not-allowed;
+}
+
+.move-popover-option.is-current .move-popover-prefix {
+  color: var(--accent-dim);
+}
+
+.move-popover-prefix {
+  font-weight: 600;
+  color: var(--ink-3);
+  width: 1ch;
+  user-select: none;
+}
+
+.move-popover-name {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.move-popover-badge {
+  font-family: var(--font-mono);
+  font-size: var(--fs-2xs);
+  color: var(--ink-4);
+  letter-spacing: 0.04em;
+}
+
+/* ==========================================================================
+   TOC — lista como histórico de comandos
+   ========================================================================== */
+
+.toc {
+  display: flex;
+  flex-direction: column;
+  /* flex:1 1 0 + min-height:0 é o idiom canônico de scroller interno em flex
+     column. O `1 1 0` faz o .toc preencher o espaço sobrando entre os blocos
+     auto-sized da sidebar (head/projects/search/foot); o `min-height:0` libera
+     o overflow-y a engajar (sem isso, o min implícito de flex item é `auto` =
+     altura intrínseca do conteúdo, e o scroll nunca dispararia). */
+  flex: 1 1 0;
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+  border-top: 1px solid var(--rule);
+  border-bottom: 1px solid var(--rule);
+  /* iOS: scroll inercial real e sem rubber-band vazando para a página atrás
+     do drawer. Aplicado no scroller real, não no .sidebar (overflow: hidden). */
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+}
+
+.toc-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+}
+
+.toc-list:empty {
+  display: none;
+}
+
+.toc-item {
+  position: relative;
+  display: grid;
+  /* Duas colunas: caret + título. A 3ª coluna anterior (auto) era fantasma —
+     o .toc-item-remove é position:absolute e não ocupa célula. */
+  grid-template-columns: auto 1fr;
+  grid-template-rows: auto auto;
+  column-gap: var(--space-xs);
+  row-gap: 2px;
+  /* Padding-right compensa o scrollbar-gutter do .toc — sem isso, o texto
+     da lista fica 8px a menos à direita que o resto da sidebar. */
+  padding: var(--space-xs) calc(var(--sidebar-pad-x) - var(--scroll-gutter))
+    var(--space-xs) var(--sidebar-pad-x);
+  cursor: pointer;
+  background: transparent;
+  transition: background-color var(--dur-fast) var(--ease-out-quart);
+  border-left: 2px solid transparent; /* reservado para cursor de seleção */
+  outline: none;
+}
+
+.toc-item:hover,
+.toc-item:focus-visible {
+  background: var(--bg-hover);
+}
+
+.toc-item:focus-visible {
+  box-shadow: inset 0 0 0 1px var(--focus-ring);
+}
+
+.toc-item.is-selected,
+.toc-item.is-selected:hover,
+.toc-item.is-selected:focus-visible {
+  background: var(--bg-selected);
+  border-left-color: var(--accent);
+}
+
+/* Prefixo ❯ — acende em âmbar quando selecionado */
+.toc-item-caret {
+  grid-row: 1;
+  grid-column: 1;
+  font-family: var(--font-mono);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  color: var(--ink-3);
+  line-height: 1.35;
+  width: 1ch;
+  transition: color var(--dur-fast) var(--ease-out-quart);
+  user-select: none;
+}
+
+.toc-item:hover .toc-item-caret {
+  color: var(--ink-2);
+}
+
+.toc-item.is-selected .toc-item-caret {
+  color: var(--accent);
+}
+
+.toc-item-title {
+  grid-row: 1;
+  grid-column: 2;
+  font-family: var(--font-mono);
+  font-size: var(--fs-sm);
+  font-weight: 500;
+  color: var(--ink-1);
+  line-height: 1.35;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.toc-item-meta {
+  grid-row: 2;
+  grid-column: 2;
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2xs);
+  color: var(--ink-4);
+  line-height: 1.3;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  letter-spacing: 0.01em;
+}
+
+.toc-item-meta-sep {
+  color: var(--ink-4);
+  opacity: 0.5;
+  user-select: none;
+}
+
+.toc-item-hash {
+  color: var(--ink-3);
+}
+
+.toc-item.is-selected .toc-item-hash {
+  color: var(--accent-dim);
+}
+
+/* Wrapper das ações (mover + excluir) — centro vertical, ancorado à direita.
+   Antes era um único .toc-item-remove com position:absolute; agora os dois
+   botões compartilham o mesmo eixo via flex inline. */
+.toc-item-actions {
+  position: absolute;
+  top: 50%;
+  right: var(--space-md);
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.toc-item-move,
+.toc-item-remove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  border-radius: 2px;
+  font-family: var(--font-mono);
+  font-size: var(--fs-sm);
+  font-weight: 500;
+  color: var(--ink-4);
+  line-height: 1;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity var(--dur-fast) var(--ease-out-quart),
+    color var(--dur-fast) var(--ease-out-quart),
+    background-color var(--dur-fast) var(--ease-out-quart);
+}
+
+.toc-item:hover .toc-item-move,
+.toc-item:focus-visible .toc-item-move,
+.toc-item:hover .toc-item-remove,
+.toc-item:focus-visible .toc-item-remove,
+.toc-item-move:focus-visible,
+.toc-item-remove:focus-visible {
+  opacity: 1;
+}
+
+.toc-item-move:hover {
+  color: var(--accent);
+  background: color-mix(in oklch, var(--accent) 14%, transparent);
+}
+
+.toc-item-move:focus-visible {
+  outline: 1px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.toc-item-remove:hover {
+  color: var(--danger);
+  background: color-mix(in oklch, var(--danger) 14%, transparent);
+}
+
+.toc-item-remove:focus-visible {
+  outline: 1px solid var(--danger);
+  outline-offset: 1px;
+}
+
+@media (hover: none) {
+  .toc-item-move,
+  .toc-item-remove {
+    opacity: 1;
+  }
+}
+
+/* Estado de drag — quando o user agarra um item da lista. Reduz opacidade
+   sem alterar layout (transform/opacity = sem repaint pesado). */
+.toc-item.is-dragging,
+.projects-item.is-dragging {
+  opacity: 0.4;
+}
+
+/* Cursor sugere que o item é arrastável. Apenas projetos reais (com
+   data-project-id) — virtuais não. */
+.projects-item[data-project-id] {
+  cursor: grab;
+}
+
+.projects-item[data-project-id]:active {
+  cursor: grabbing;
+}
+
+/* Estados vazios ------------------------------------------------------- */
+.toc-empty {
+  margin: auto 0;
+  padding: var(--space-2xl) var(--sidebar-pad-x);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.toc-empty-title {
+  font-family: var(--font-mono);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  color: var(--ink-2);
+  text-transform: lowercase;
+  letter-spacing: 0.005em;
+}
+
+.toc-empty-title::before {
+  content: "// ";
+  color: var(--ink-4);
+  font-weight: 400;
+  user-select: none;
+}
+
+.toc-empty-hint {
+  font-family: var(--font-sans);
+  font-size: var(--fs-xs);
+  color: var(--ink-3);
+  line-height: 1.5;
+  max-width: 32ch;
+}
+
+/* Rodapé da sidebar --------------------------------------------------- */
+.sidebar-foot {
+  padding: 0 var(--sidebar-pad-x);
+}
+
+.theme-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+}
+
+.theme-switch-label {
+  color: var(--ink-4);
+  letter-spacing: 0.01em;
+}
+
+.theme-switch-sep {
+  color: var(--ink-4);
+  opacity: 0.5;
+}
+
+.theme-option {
+  background: transparent;
+  border: 0;
+  padding: 0;
+  color: var(--ink-3);
+  font: inherit;
+  cursor: pointer;
+  transition: color var(--dur-fast) var(--ease-out-quart);
+}
+
+.theme-option:hover {
+  color: var(--ink-1);
+}
+
+.theme-option[aria-checked="true"] {
+  color: var(--accent);
+}
+
+/* ==========================================================================
+   Main — editor
+   ========================================================================== */
+
+.main {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xl);
+  padding: var(--space-xl) clamp(var(--space-xl), 4vw, var(--space-3xl))
+    var(--space-3xl);
+  /* height (não min-height): com upper bound o overflow-y: auto entrega scroll
+     interno em vez de empurrar o body e arrastar a sidebar com a rolagem. */
+  height: 100%;
+  overflow-y: auto;
+  background: var(--bg);
+}
+
+/* Cabeçalho do main --------------------------------------------------- */
+.main-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-md);
+  padding-bottom: var(--space-md);
+  border-bottom: 1px solid var(--rule);
+}
+
+.main-head-left {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  min-width: 0;
+  flex: 1;
+}
+
+.main-status {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--space-xs);
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  color: var(--ink-3);
+  line-height: 1.4;
+  overflow: hidden;
+  min-width: 0;
+}
+
+.main-status-prefix {
+  color: var(--accent);
+  font-weight: 700;
+  user-select: none;
+  flex-shrink: 0;
+}
+
+.main-status-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.main-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-md);
+  flex-shrink: 0;
+}
+
+.btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: var(--space-xs) var(--space-sm);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 3px;
+  font-family: var(--font-sans);
+  font-size: var(--fs-sm);
+  font-weight: 500;
+  color: var(--ink-2);
+  cursor: pointer;
+  transition: color var(--dur-fast) var(--ease-out-quart),
+    background-color var(--dur-fast) var(--ease-out-quart),
+    border-color var(--dur-fast) var(--ease-out-quart);
+}
+
+.btn-ghost:hover {
+  color: var(--ink-1);
+  background: var(--bg-hover);
+  border-color: var(--rule);
+}
+
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  padding: var(--space-xs) var(--space-md);
+  background: var(--accent);
+  color: var(--accent-on);
+  border: 1px solid var(--accent);
+  border-radius: 3px;
+  font-family: var(--font-sans);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  letter-spacing: 0.005em;
+  cursor: pointer;
+  transition: background-color var(--dur-fast) var(--ease-out-quart),
+    border-color var(--dur-fast) var(--ease-out-quart),
+    transform var(--dur-instant) var(--ease-out-quart);
+}
+
+.btn-primary:hover {
+  background: var(--accent-hover);
+  border-color: var(--accent-hover);
+}
+
+.btn-primary:active {
+  transform: translateY(1px);
+}
+
+/* Editor -------------------------------------------------------------- */
+.editor {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+  max-width: 78ch;
+}
+
+.prompt-title {
+  font-family: var(--font-mono);
+  font-size: var(--fs-2xl);
+  font-weight: 600;
+  line-height: 1.2;
+  color: var(--ink-1);
+  letter-spacing: -0.01em;
+  outline: none;
+  min-height: 1.2em;
+}
+
+.prompt-content {
+  font-family: var(--font-mono);
+  font-size: var(--fs-base);
+  line-height: var(--lh-mono);
+  color: var(--ink-2);
+  outline: none;
+  min-height: 14rem;
+  /* Faixa clicável abaixo do último bloco — garante que o handler de mousedown
+     (focusTrailingParagraph) tenha onde fire mesmo com o conteúdo passando do
+     min-height. Sem isso, depois de um <pre> ou <h1> que estica o editor, o
+     "clique uma linha abaixo" cai fora do prompt-content. */
+  padding-bottom: 6rem;
+  max-width: 78ch;
+  word-break: break-word;
+  white-space: pre-wrap;
+}
+
+.prompt-content p {
+  margin-bottom: 1em;
+}
+
+.prompt-content p:last-child {
+  margin-bottom: 0;
+}
+
+.prompt-content ul,
+.prompt-content ol {
+  padding-left: 1.5em;
+  margin-bottom: 1em;
+}
+
+.prompt-content strong {
+  color: var(--ink-1);
+  font-weight: 700;
+}
+
+.prompt-content em {
+  color: var(--ink-2);
+  font-style: italic;
+}
+
+.prompt-content a {
+  color: var(--accent);
+  text-underline-offset: 3px;
+}
+
+.prompt-content code {
+  font-size: 0.95em;
+  background: var(--bg-sunk);
+  padding: 0.1em 0.35em;
+  border-radius: 2px;
+  border: 1px solid var(--rule);
+  color: var(--ink-1);
+}
+
+.prompt-content pre {
+  background: var(--bg-sunk);
+  padding: var(--space-md);
+  border: 1px solid var(--rule);
+  border-radius: 3px;
+  overflow-x: auto;
+  margin-bottom: 1em;
+}
+
+.prompt-content blockquote {
+  padding-left: var(--space-md);
+  color: var(--ink-3);
+  margin-bottom: 1em;
+}
+
+/* Placeholders em contenteditable ------------------------------------- */
+.editable-wrapper {
+  position: relative;
+}
+
+.editable-wrapper::before {
+  content: attr(data-placeholder);
+  position: absolute;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity var(--dur-fast) var(--ease-out-quart);
+}
+
+.editable-wrapper.is-empty::before {
+  opacity: 1;
+}
+
+.editable-wrapper--title.is-empty::before {
+  font-family: var(--font-mono);
+  font-size: var(--fs-2xl);
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+  color: var(--ink-4);
+}
+
+.editable-wrapper--content.is-empty::before {
+  font-family: var(--font-mono);
+  font-size: var(--fs-base);
+  line-height: var(--lh-mono);
+  color: var(--ink-4);
+}
+
+/* ==========================================================================
+   Sidebar recolhida — botão de reabrir
+   ========================================================================== */
+
+.sidebar-reopen {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: 4px var(--space-sm);
+  background: var(--bg-sunk);
+  border: 1px solid var(--rule);
+  border-radius: 3px;
+  color: var(--ink-2);
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  line-height: 1.3;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: color var(--dur-fast) var(--ease-out-quart),
+    background-color var(--dur-fast) var(--ease-out-quart),
+    border-color var(--dur-fast) var(--ease-out-quart);
+}
+
+.sidebar-reopen:hover {
+  color: var(--ink-1);
+  background: var(--bg-hover);
+  border-color: var(--rule-strong);
+}
+
+.sidebar-reopen-caret {
+  color: var(--accent);
+  font-weight: 700;
+  display: inline-block;
+  transition: transform var(--dur-fast) var(--ease-out-quart);
+}
+
+/* Nudge do caret no hover — sugere "para a direita" (onde a sidebar vai aparecer) */
+.sidebar-reopen:hover .sidebar-reopen-caret {
+  transform: translateX(2px);
+}
+
+/* Visibilidade do reopen — semântica diferente por breakpoint:
+   • Desktop (≥861px): sidebar aberta por padrão → reopen só aparece quando o
+     usuário recolheu (.sidebar-closed).
+   • Mobile (≤860px): drawer fechado por padrão → reopen aparece sempre que o
+     drawer não está aberto. Sem a regra mobile separada, o botão ficaria
+     escondido no primeiro paint até o JS adicionar .sidebar-closed (FOUC). */
+@media (min-width: 861px) {
+  .sidebar-reopen {
+    display: none;
+  }
+  .app.sidebar-closed .sidebar-reopen {
+    display: inline-flex;
+    animation: sidebar-reopen-in var(--dur-base) var(--ease-out-expo) 120ms both;
+  }
+}
+
+@keyframes sidebar-reopen-in {
+  from {
+    opacity: 0;
+    transform: translateX(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.app.sidebar-closed {
+  grid-template-columns: 0 minmax(0, 1fr);
+}
+
+/* Desktop: sidebar mantém display:grid, só fica com largura 0 (com overflow:clip clipando o conteúdo)
+   — assim a transição de grid-template-columns animata suavemente.
+   No mobile, o override em @media cuida da posição fixed + translate.
+
+   Por que os filhos precisam de fade (apenas no desktop):
+   A coluna do grid encolhe de --sidebar-w → 0 em 220ms. Os filhos da sidebar
+   foram dimensionados pelo container-type: inline-size na largura antiga e,
+   durante a transição, mantêm intrinsic-width próximo do original — produzindo
+   um "rasgo" de conteúdo cortado pela esquerda enquanto a célula do grid
+   encolhe. A solução é desacoplar visibilidade da geometria: apaga os filhos
+   antes do grid terminar de encolher (sem delay no fechar) e revela depois
+   do grid expandir (com delay no abrir). No mobile o problema não existe
+   porque o drawer translada como um bloco — não há mismatch de largura. */
+@media (min-width: 861px) {
+  .sidebar > * {
+    /* Default (aberto) — quando .sidebar-closed sai, refaz a transição com
+       delay 140ms pra coluna voltar primeiro, depois conteúdo aparece. */
+    transition: opacity 100ms var(--ease-out-quart) 140ms;
+  }
+  .app.sidebar-closed .sidebar > * {
+    opacity: 0;
+    /* Fechando — apaga em 100ms (antes do grid terminar em 220ms),
+       sem delay, então não dá tempo de "vazar". */
+    transition: opacity 100ms var(--ease-out-quart);
+  }
+}
+
+/* Backdrop atrás da sidebar — oculto no desktop, aparece no mobile quando a sidebar está aberta */
+.sidebar-backdrop {
+  display: none;
+}
+
+/* ==========================================================================
+   Toast
+   ========================================================================== */
+
+.toast-region {
+  position: fixed;
+  right: var(--space-lg);
+  bottom: var(--space-lg);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  /* Acima do drawer (40) e do backdrop (35) — toast disparado com drawer
+     aberto (ex: Ctrl+S durante busca, erro de rede) precisa ficar visível. */
+  z-index: 60;
+  pointer-events: none;
+}
+
+.toast {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-md);
+  min-width: 15rem;
+  max-width: 26rem;
+  padding: var(--space-xs) var(--space-sm) var(--space-xs) var(--space-md);
+  background: var(--bg-elev);
+  border: 1px solid var(--rule-strong);
+  border-radius: 3px;
+  color: var(--ink-1);
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  line-height: 1.4;
+  pointer-events: auto;
+  box-shadow: var(--shadow-card);
+  transform: translateY(8px);
+  opacity: 0;
+  transition: transform var(--dur-base) var(--ease-out-expo),
+    opacity var(--dur-base) var(--ease-out-quart);
+}
+
+.toast.is-visible {
+  transform: translateY(0);
+  opacity: 1;
+}
+
+.toast.is-leaving {
+  transform: translateY(6px);
+  opacity: 0;
+}
+
+.toast-message {
+  flex: 1;
+  color: var(--ink-2);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.toast-message strong {
+  color: var(--ink-1);
+  font-weight: 600;
+}
+
+.toast-message .hash {
+  color: var(--accent-dim);
+}
+
+.toast-action {
+  background: transparent;
+  border: 0;
+  padding: 2px var(--space-xs);
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  font-weight: 500;
+  color: var(--accent);
+  cursor: pointer;
+  border-radius: 2px;
+  white-space: nowrap;
+  transition: background-color var(--dur-fast) var(--ease-out-quart);
+}
+
+.toast-action:hover {
+  background: color-mix(in oklch, var(--accent) 15%, transparent);
+}
+
+.toast--error .toast-message strong {
+  color: var(--danger);
+}
+
+/* ==========================================================================
+   Auth — página de login (login.html)
+   Dev-tool vernacular: split aside/main, boot log, form denso, acento no CTA.
+   ========================================================================== */
+
+.auth-body {
+  min-height: var(--app-h);
+  background: var(--bg);
+  overflow-x: hidden;
+}
+
+.auth {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
+  min-height: var(--app-h);
+  width: 100%;
+}
+
+/* Aside — wordmark + boot log ----------------------------------------- */
+.auth-aside {
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  gap: var(--space-xl);
+  padding: clamp(var(--space-xl), 4vw, var(--space-3xl))
+    clamp(var(--space-xl), 5vw, var(--space-3xl));
+  background: var(--bg-elev);
+  border-right: 1px solid var(--rule);
+  min-height: var(--app-h);
+}
+
+.auth-aside-head {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.auth-log {
+  align-self: center;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  color: var(--ink-3);
+  line-height: 1.55;
+  max-width: 44ch;
+}
+
+.auth-log-line {
+  display: grid;
+  grid-template-columns: 3.25rem 1fr;
+  gap: var(--space-sm);
+  align-items: baseline;
+}
+
+.auth-log-tag {
+  color: var(--ink-4);
+  letter-spacing: 0.02em;
+  font-weight: 500;
+  text-align: left;
+}
+
+.auth-log-tag::before {
+  content: "[";
+  color: var(--ink-4);
+  opacity: 0.55;
+  margin-right: 1px;
+}
+
+.auth-log-tag::after {
+  content: "]";
+  color: var(--ink-4);
+  opacity: 0.55;
+  margin-left: 1px;
+}
+
+.auth-log-tag--active {
+  color: var(--ink-2);
+}
+
+.auth-log-msg {
+  color: var(--ink-3);
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.auth-log-value {
+  color: var(--ink-2);
+}
+
+.auth-log-line--wait .auth-log-msg {
+  color: var(--ink-2);
+}
+
+/* Cursor piscante — signal, não decoração */
+.auth-cursor {
+  display: inline-block;
+  width: 0.55em;
+  height: 0.95em;
+  background: var(--ink-2);
+  vertical-align: -0.1em;
+  margin-left: 4px;
+  animation: auth-blink 1.05s steps(2, jump-none) infinite;
+}
+
+@keyframes auth-blink {
+  50% { opacity: 0; }
+}
+
+.auth-aside-foot {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.auth-meta {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--space-xs);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2xs);
+  color: var(--ink-4);
+  letter-spacing: 0.02em;
+  line-height: 1.5;
+}
+
+.auth-meta-key {
+  color: var(--ink-3);
+}
+
+.auth-meta-sep {
+  opacity: 0.5;
+}
+
+/* Main — form --------------------------------------------------------- */
+.auth-main {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: clamp(var(--space-xl), 4vw, var(--space-3xl))
+    clamp(var(--space-xl), 6vw, var(--space-3xl));
+}
+
+.auth-form-wrap {
+  width: 100%;
+  max-width: 40ch;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+  animation: page-in var(--dur-slow) var(--ease-out-expo) both;
+}
+
+.auth-status {
+  margin: 0;
+}
+
+.auth-heading {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.auth-title {
+  font-family: var(--font-mono);
+  font-size: var(--fs-2xl);
+  font-weight: 600;
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+  color: var(--ink-1);
+  margin: 0;
+}
+
+.auth-subtitle {
+  font-family: var(--font-sans);
+  font-size: var(--fs-sm);
+  color: var(--ink-3);
+  line-height: 1.5;
+  margin: 0;
+  max-width: 40ch;
+}
+
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  margin-top: var(--space-2xs);
+}
+
+.auth-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.auth-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-sm);
+}
+
+.auth-row[hidden] {
+  display: none;
+}
+
+@media (max-width: 420px) {
+  .auth-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Wrapper que colapsa altura via grid-trick (alterna entre login/register).
+   Mantém os filhos no DOM mas suprime altura, opacidade e foco quando oculto. */
+.auth-row-collapse {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  transform: translateY(-4px);
+  transition:
+    grid-template-rows var(--dur-base) var(--ease-out-expo),
+    opacity var(--dur-fast) var(--ease-out-quart),
+    transform var(--dur-base) var(--ease-out-expo),
+    margin-bottom var(--dur-base) var(--ease-out-expo);
+  margin-bottom: calc(var(--space-md) * -1);
+}
+
+.auth-row-collapse > * {
+  min-height: 0;
+  overflow: hidden;
+}
+
+.auth-row-collapse[data-shown="true"] {
+  grid-template-rows: 1fr;
+  opacity: 1;
+  transform: translateY(0);
+  margin-bottom: 0;
+}
+
+.auth-label-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-sm);
+}
+
+.auth-label {
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  font-weight: 500;
+  color: var(--ink-3);
+  letter-spacing: 0.02em;
+  line-height: 1;
+  user-select: none;
+}
+
+.auth-label::before {
+  content: "// ";
+  color: var(--ink-4);
+  opacity: 0.7;
+  font-weight: 400;
+}
+
+.auth-input-wrap {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: 9px var(--space-sm);
+  background: var(--bg-sunk);
+  border: 1px solid var(--rule);
+  border-radius: 3px;
+  transition: border-color var(--dur-fast) var(--ease-out-quart),
+    background-color var(--dur-fast) var(--ease-out-quart);
+}
+
+.auth-input-wrap:hover {
+  border-color: var(--rule-strong);
+}
+
+.auth-input-wrap:focus-within {
+  border-color: var(--rule-strong);
+  background: var(--bg);
+  box-shadow: inset 0 0 0 1px var(--rule-strong);
+}
+
+.auth-input-prefix {
+  font-family: var(--font-mono);
+  font-size: var(--fs-sm);
+  color: var(--ink-4);
+  line-height: 1;
+  user-select: none;
+  transition: color var(--dur-fast) var(--ease-out-quart);
+}
+
+.auth-input-wrap:focus-within .auth-input-prefix {
+  color: var(--accent);
+}
+
+.auth-input {
+  font-family: var(--font-mono);
+  font-size: var(--fs-sm);
+  color: var(--ink-1);
+  background: transparent;
+  border: 0;
+  outline: none;
+  width: 100%;
+  min-width: 0;
+  padding: 0;
+  line-height: 1.35;
+  letter-spacing: 0;
+}
+
+.auth-input::placeholder {
+  color: var(--ink-4);
+}
+
+.auth-input:-webkit-autofill,
+.auth-input:-webkit-autofill:hover,
+.auth-input:-webkit-autofill:focus {
+  -webkit-text-fill-color: var(--ink-1);
+  -webkit-box-shadow: 0 0 0 1000px var(--bg-sunk) inset;
+  caret-color: var(--ink-1);
+  transition: background-color 9999s step-end;
+}
+
+.auth-reveal {
+  background: transparent;
+  border: 0;
+  padding: 0 4px;
+  font-family: var(--font-mono);
+  font-size: var(--fs-2xs);
+  font-weight: 500;
+  color: var(--ink-4);
+  letter-spacing: 0.03em;
+  cursor: pointer;
+  transition: color var(--dur-fast) var(--ease-out-quart);
+}
+
+.auth-reveal:hover,
+.auth-reveal[aria-pressed="true"] {
+  color: var(--ink-2);
+}
+
+.auth-link-inline {
+  font-family: var(--font-mono);
+  font-size: var(--fs-2xs);
+  color: var(--ink-3);
+  text-decoration: none;
+  letter-spacing: 0.02em;
+  transition: color var(--dur-fast) var(--ease-out-quart);
+}
+
+.auth-link-inline:hover,
+.auth-link-inline:focus-visible {
+  color: var(--ink-1);
+}
+
+/* Checkbox — appearance:none estilizada diretamente no input ---------- */
+.auth-check {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  font-family: var(--font-sans);
+  font-size: var(--fs-sm);
+  color: var(--ink-2);
+  cursor: pointer;
+  user-select: none;
+  width: fit-content;
+  padding: 2px 0;
+}
+
+.auth-check-input {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 14px;
+  height: 14px;
+  margin: 0;
+  border: 1px solid var(--rule-strong);
+  border-radius: 2px;
+  background: var(--bg-sunk);
+  cursor: pointer;
+  position: relative;
+  flex-shrink: 0;
+  transition: background-color var(--dur-fast) var(--ease-out-quart),
+    border-color var(--dur-fast) var(--ease-out-quart);
+}
+
+.auth-check-input:hover {
+  border-color: var(--ink-3);
+}
+
+.auth-check-input:checked {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.auth-check-input:checked::after {
+  content: "";
+  position: absolute;
+  left: 3px;
+  top: 0;
+  width: 4px;
+  height: 8px;
+  border-right: 1.5px solid var(--accent-on);
+  border-bottom: 1.5px solid var(--accent-on);
+  transform: rotate(42deg);
+}
+
+.auth-check-label {
+  line-height: 1.4;
+}
+
+/* Erro inline — mono, discreto, sem alert-box */
+.auth-error {
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  color: var(--danger);
+  line-height: 1.4;
+  margin: 0;
+  padding-top: var(--space-2xs);
+}
+
+.auth-error::before {
+  content: "! ";
+  font-weight: 700;
+  opacity: 0.9;
+}
+
+.auth-submit {
+  width: 100%;
+  justify-content: center;
+  padding: 10px var(--space-md);
+  margin-top: var(--space-2xs);
+  font-size: var(--fs-sm);
+  letter-spacing: 0.01em;
+  transition: background-color var(--dur-fast) var(--ease-out-quart),
+    border-color var(--dur-fast) var(--ease-out-quart),
+    transform var(--dur-instant) var(--ease-out-quart),
+    opacity var(--dur-fast) var(--ease-out-quart);
+}
+
+.auth-submit:disabled {
+  opacity: 0.65;
+  cursor: wait;
+  transform: none;
+}
+
+.auth-altline {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  color: var(--ink-3);
+  padding-top: var(--space-md);
+  border-top: 1px solid var(--rule);
+  margin-top: var(--space-2xs);
+}
+
+.auth-altline-text {
+  color: var(--ink-4);
+}
+
+.auth-altline-link {
+  color: var(--ink-1);
+  text-decoration: none;
+  font-weight: 500;
+  transition: color var(--dur-fast) var(--ease-out-quart);
+}
+
+.auth-altline-link:hover,
+.auth-altline-link:focus-visible {
+  color: var(--accent);
+}
+
+/* Log tag — variante danger para token ausente/inválido --------------- */
+.auth-log-tag--danger {
+  color: var(--danger);
+}
+
+.auth-log-tag--danger::before,
+.auth-log-tag--danger::after {
+  color: var(--danger);
+  opacity: 0.65;
+}
+
+/* Checklist de requisitos da senha ------------------------------------ */
+.auth-check-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  color: var(--ink-4);
+  line-height: 1.4;
+}
+
+.auth-check-item {
+  display: grid;
+  grid-template-columns: 1rem 1fr;
+  align-items: baseline;
+  gap: var(--space-xs);
+  transition: color var(--dur-fast) var(--ease-out-quart);
+}
+
+/* O glyph é renderizado pelo ::before — o conteúdo dentro do span é só
+   fallback acessível. Escondemos visualmente o conteúdo original. */
+.auth-check-mark {
+  position: relative;
+  color: var(--ink-4);
+  text-align: center;
+  user-select: none;
+  transition: color var(--dur-fast) var(--ease-out-quart);
+  font-size: 0;
+  line-height: 1;
+}
+
+.auth-check-mark::before {
+  content: "→";
+  font-size: var(--fs-xs);
+}
+
+.auth-check-item.is-ok {
+  color: var(--ink-2);
+}
+
+.auth-check-item.is-ok .auth-check-mark {
+  color: var(--accent);
+}
+
+.auth-check-item.is-ok .auth-check-mark::before {
+  content: "✓";
+}
+
+/* Painel de resultado — usado em forgot (sent), reset (ok/invalid) ---- */
+.auth-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  padding: var(--space-md);
+  background: var(--bg-sunk);
+  border: 1px solid var(--rule);
+  border-radius: 3px;
+  animation: page-in var(--dur-base) var(--ease-out-expo) both;
+}
+
+.auth-panel--ok {
+  background: color-mix(in oklch, var(--accent) 6%, var(--bg-sunk));
+  border-color: color-mix(in oklch, var(--accent) 30%, var(--rule));
+}
+
+.auth-panel--alert {
+  background: color-mix(in oklch, var(--danger) 6%, var(--bg-sunk));
+  border-color: color-mix(in oklch, var(--danger) 30%, var(--rule));
+}
+
+.auth-panel-title {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--space-xs);
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  color: var(--ink-1);
+  letter-spacing: 0.01em;
+}
+
+.auth-panel-tag {
+  font-family: var(--font-mono);
+  font-size: var(--fs-2xs);
+  font-weight: 600;
+  text-transform: lowercase;
+  letter-spacing: 0.04em;
+  padding: 2px 6px;
+  border-radius: 2px;
+  color: var(--ink-2);
+  background: color-mix(in oklch, var(--ink-2) 12%, transparent);
+  line-height: 1;
+}
+
+.auth-panel-tag--ok {
+  color: var(--accent);
+  background: color-mix(in oklch, var(--accent) 18%, transparent);
+}
+
+.auth-panel-tag--alert {
+  color: var(--danger);
+  background: color-mix(in oklch, var(--danger) 18%, transparent);
+}
+
+.auth-panel-body {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: var(--fs-sm);
+  color: var(--ink-2);
+  line-height: 1.5;
+  max-width: 42ch;
+}
+
+.auth-panel-body strong {
+  font-weight: 600;
+  color: var(--ink-1);
+}
+
+.auth-panel-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+  align-items: center;
+  padding-top: var(--space-2xs);
+}
+
+.auth-panel-link {
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  color: var(--ink-2);
+  text-decoration: none;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  background: transparent;
+  border: 0;
+  padding: 0;
+  transition: color var(--dur-fast) var(--ease-out-quart);
+}
+
+.auth-panel-link::before {
+  content: "❯ ";
+  color: var(--ink-4);
+}
+
+.auth-panel-link:hover,
+.auth-panel-link:focus-visible {
+  color: var(--accent);
+}
+
+.auth-panel-link:hover::before,
+.auth-panel-link:focus-visible::before {
+  color: var(--accent);
+}
+
+.auth-panel-link--primary {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.auth-panel-link--primary::before {
+  color: var(--accent);
+}
+
+/* Responsivo ---------------------------------------------------------- */
+@media (max-width: 900px) {
+  .auth {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto 1fr;
+  }
+
+  .auth-aside {
+    min-height: auto;
+    border-right: 0;
+    border-bottom: 1px solid var(--rule);
+    padding: var(--space-lg) var(--space-xl);
+    grid-template-rows: auto auto;
+    gap: var(--space-md);
+  }
+
+  .auth-log {
+    align-self: auto;
+    max-width: none;
+  }
+
+  /* Em tela pequena, o boot log ocupa menos protagonismo */
+  .auth-log-line {
+    grid-template-columns: 2.75rem 1fr;
+  }
+
+  .auth-aside-foot {
+    display: none;
+  }
+
+  .auth-main {
+    padding: var(--space-xl) var(--space-xl) var(--space-3xl);
+  }
+}
+
+@media (max-width: 480px) {
+  .auth-aside,
+  .auth-main {
+    padding-left: var(--space-lg);
+    padding-right: var(--space-lg);
+  }
+
+  .auth-aside {
+    padding-top: var(--space-md);
+    padding-bottom: var(--space-md);
+  }
+
+  .auth-main {
+    padding-top: var(--space-lg);
+    padding-bottom: var(--space-2xl);
+  }
+
+  .auth-title {
+    font-size: 1.5rem;
+  }
+
+  /* Boot log encurtado — só primeira e última linha relevantes em mobile */
+  .auth-log-line:nth-child(2),
+  .auth-log-line:nth-child(3) {
+    display: none;
+  }
+
+  .auth-form-wrap {
+    max-width: 100%;
+  }
+}
+
+/* ==========================================================================
+   Motion
+   ========================================================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+@keyframes page-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.editor {
+  animation: page-in var(--dur-slow) var(--ease-out-expo) both;
+}
+
+/* ==========================================================================
+   Responsivo
+   ========================================================================== */
+
+/* Tablet (portrait): sidebar fica menor; main com padding reduzido. */
+@media (max-width: 1024px) {
+  :root {
+    --sidebar-w: 280px;
+  }
+
+  .main {
+    padding: var(--space-lg) var(--space-xl) var(--space-2xl);
+  }
+}
+
+/* Tablet portrait + mobile: sidebar vira drawer.
+   860px cobre iPad portrait (768) + Surface portrait + landscape de 720+chrome. */
+@media (max-width: 860px) {
+  /* Em drawer mode o .main é o único grid item (sidebar é position: fixed,
+     fora do grid). Forçar 1fr em todos os estados de classe — sem isso a
+     regra global .app.sidebar-closed { grid-template-columns: 0 1fr } vence
+     por especificidade e o main vai pra coluna de 0px. Tela fica preta. */
+  .app,
+  .app.sidebar-closed,
+  .app.sidebar-open {
+    grid-template-columns: 1fr;
+  }
+
+  .sidebar {
+    position: fixed;
+    inset: 0 auto 0 0;
+    z-index: 40;
+    width: min(88vw, 360px);
+    max-height: var(--app-h);
+    border-right: 1px solid var(--rule-strong);
+    box-shadow: 8px 0 32px -16px oklch(0% 0 0 / 0.5);
+    transform: translateX(-100%);
+    transition: transform var(--dur-base) var(--ease-out-expo);
+    /* Respeita notch/cutout no topo, esquerda e bottom (home indicator iOS).
+       O eixo direito não precisa — drawer não toca a borda física direita. */
+    padding-top: max(var(--space-lg), env(safe-area-inset-top));
+    padding-left: env(safe-area-inset-left);
+    padding-bottom: max(var(--space-md), env(safe-area-inset-bottom));
+  }
+
+  /* Drawer default = fechado. Sem .sidebar-open o sidebar fica offscreen,
+     independente da presença/ausência de .sidebar-closed. Isso elimina FOUC:
+     no primeiro paint mobile, .app não tem nenhuma classe → sidebar fica fora. */
+  .app:not(.sidebar-open) .sidebar {
+    transform: translateX(-100%);
+  }
+
+  .app.sidebar-open .sidebar {
+    transform: translateX(0);
+  }
+
+  .main {
+    /* No drawer mode, padding-x vai para os filhos para o main-head sticky
+       poder ocupar 100% da viewport sem margem negativa (que causa overflow-x) */
+    padding: 0 0 var(--space-2xl);
+    gap: var(--space-md);
+  }
+
+  /* Backdrop ativo no drawer — só visível quando o drawer está aberto */
+  .sidebar-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: oklch(0% 0 0 / 0.5);
+    opacity: 0;
+    pointer-events: none;
+    z-index: 35;
+    transition: opacity var(--dur-base) var(--ease-out-quart);
+  }
+
+  .app.sidebar-open .sidebar-backdrop {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  /* Header do main vira sticky para o botão "lista" ficar à mão.
+     Sem margem negativa: o main não tem padding-x, head ocupa full-width
+     com seu próprio padding interno. Fundo translúcido cobre o que rola. */
+  .main-head {
+    position: sticky;
+    top: 0;
+    z-index: 5;
+    padding: var(--space-md) var(--space-lg);
+    background: color-mix(in oklch, var(--bg) 92%, transparent);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    border-bottom: 1px solid var(--rule);
+  }
+
+  /* Editor recebe o padding-x que o main perdeu */
+  .editor {
+    padding: 0 var(--space-lg);
+    margin-top: var(--space-xs);
+  }
+
+  /* Touch density: itens da lista com altura confortável */
+  .toc-item {
+    padding-top: var(--space-sm);
+    padding-bottom: var(--space-sm);
+  }
+
+  /* Meta dos itens fica legível no toque (fs-2xs/11px é apertado em mobile). */
+  .toc-item-meta {
+    font-size: var(--fs-xs);
+  }
+
+  /* Botão "novo prompt" ganha respiro vertical pra alvo de toque confortável
+     sem virar caixa cheia — mantém a estética de link-button. */
+  .action-new {
+    padding: var(--space-sm) 0;
+  }
+
+  /* Close toggle do drawer — vira labeled, simétrico ao botão "lista" no main.
+     Especificidade .sidebar-head .icon-btn (0,2,0) bate o (pointer:coarse)
+     .icon-btn (0,1,0) que tenta forçar quadrado de 36×36. O glifo ❮ vem do
+     HTML (.icon-btn-glyph); o ::after acrescenta o rótulo "fechar". */
+  .sidebar-head .icon-btn {
+    width: auto;
+    height: auto;
+    min-height: var(--tap);
+    padding: 0 var(--space-sm);
+    background: var(--bg-sunk);
+    border: 1px solid var(--rule);
+    border-radius: 3px;
+    color: var(--ink-2);
+    font-family: var(--font-mono);
+    font-size: var(--fs-xs);
+    line-height: 1.3;
+    gap: var(--space-xs);
+  }
+  .sidebar-head .icon-btn-glyph {
+    /* Cor e weight já vêm do base .icon-btn-glyph; aqui só reduz o glifo
+       pra caber ao lado do label "fechar" no botão labeled de drawer. */
+    font-size: var(--fs-xs);
+  }
+  .sidebar-head .icon-btn::after {
+    content: "fechar";
+  }
+  .sidebar-head .icon-btn:hover,
+  .sidebar-head .icon-btn:active {
+    color: var(--ink-1);
+    background: var(--bg-hover);
+    border-color: var(--rule-strong);
+  }
+
+  /* Reopen ("lista") visível por padrão — drawer mobile vive fechado.
+     Sem isso, o botão fica escondido até o JS rodar (FOUC). */
+  .sidebar-reopen {
+    display: inline-flex;
+  }
+  .app.sidebar-open .sidebar-reopen {
+    display: none;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Container queries — sidebar (interno adapta ao próprio width)
+   --------------------------------------------------------------------------
+   Threshold de 350px — derivado da matemática real do header em drawer mode.
+   Inner do header = drawer - 2*pad-x. Botão "[❮ fechar]" = ~96px (padding 24
+   + glifo 12 + gap 8 + label "fechar" ~52). Wordmark "manager-prompts" em
+   fs-xl mono = ~196px. Soma + gap = ~304px. Pra caber sem overflow, o inner
+   precisa ≥ 304 → drawer ≥ 344px → vw ≥ ~391 (88vw=344). Logo, qualquer
+   drawer ≤ 350px cai no caso "labeled-button-overflow". Disparar a 350px
+   (não 290) cobre iPhone 12/13/14 (390), iPhone 14 Pro (393), Pixel 5/6 (393),
+   Galaxy S20 (360), Galaxy S21 (412 → drawer 360, fora do range), etc.
+   Threshold via container query (não @media) porque o que importa é o width
+   real do sidebar, não a viewport — funciona pra desktop tablet (sidebar 280)
+   e pra drawer ao mesmo tempo.
+*/
+@container sidebar (max-width: 350px) {
+  /* Gutter horizontal mais apertado — recupera ~8px por lado, o que sobra
+     pro email truncar menos no foot e pro título da lista respirar. */
+  .sidebar-head,
+  .search-block,
+  .sidebar-foot,
+  .toc-empty {
+    padding-left: var(--space-md);
+    padding-right: var(--space-md);
+  }
+
+  .toc-item {
+    padding-left: var(--space-md);
+    padding-right: calc(var(--space-md) - var(--scroll-gutter));
+  }
+
+  /* Wordmark cede 4px — libera ~30px no header pra coabitar com o botão
+     fechar sem ellipsis no nome. fs-lg (18px) ainda lê como heading. */
+  .wordmark-name {
+    font-size: var(--fs-lg);
+  }
+}
+
+/* Sidebar ainda mais estreito (≤290px) — desktop tablet OU drawer em phone
+   pequeno (320-330px viewport). Session-row quebra em duas linhas pro email
+   ocupar uma e as ações outra: trunca menos, lê melhor no toque. */
+@container sidebar (max-width: 290px) {
+  .session-row {
+    flex-wrap: wrap;
+    row-gap: var(--space-2xs);
+  }
+
+  .session-user {
+    flex: 1 1 100%;
+    min-width: 0;
+  }
+
+  .session-actions {
+    flex: 1 1 100%;
+    justify-content: flex-end;
+  }
+
+  .theme-switch {
+    gap: var(--space-2xs);
+  }
+}
+
+/* Drawer mode + sidebar estreito → botão "fechar" volta a ser glifo-only
+   square (tap target), porque a label sans não cabe ao lado do wordmark.
+   Aninhamento @media+@container: o @media isola pro drawer (a versão labeled
+   só existe em ≤860px); o @container resolve no width real do sidebar.
+   Sem isso, em desktop tablet (sidebar 280) o icon-btn 28×28 viraria 44×44
+   indevidamente — desktop não tem ::after "fechar", então não precisa do
+   override. */
+@media (max-width: 860px) {
+  @container sidebar (max-width: 350px) {
+    .sidebar-head .icon-btn::after {
+      content: none;
+    }
+    .sidebar-head .icon-btn {
+      width: var(--tap);
+      min-width: var(--tap);
+      padding: 0;
+      justify-content: center;
+    }
+    .sidebar-head .icon-btn-glyph {
+      font-size: var(--fs-md);
+    }
+  }
+}
+
+/* Mobile estreito: header em duas linhas, ações em row inferior.
+   Threshold em 640 cobre iPhone 14 Pro Max landscape (430) e Surface Duo (540). */
+@media (max-width: 640px) {
+  .main-head {
+    flex-wrap: wrap;
+    gap: var(--space-xs) var(--space-sm);
+  }
+
+  .main-head-left {
+    flex: 1 1 100%;
+    min-width: 0;
+  }
+
+  .main-actions {
+    width: 100%;
+    justify-content: space-between;
+    gap: var(--space-xs);
+  }
+
+  .main-actions .btn-ghost,
+  .main-actions .btn-primary {
+    flex: 1;
+    justify-content: center;
+  }
+
+  .improve-wrap {
+    flex: 1;
+  }
+
+  .improve-wrap > .btn-ghost {
+    width: 100%;
+  }
+
+  /* Popover ancora-se ao botão mas precisa caber na tela */
+  .improve-popover {
+    right: 0;
+    left: 0;
+    min-width: 0;
+  }
+
+  .prompt-title {
+    font-size: 1.5rem;
+  }
+
+  .editor {
+    gap: var(--space-md);
+  }
+
+  /* Toast centralizado no rodapé em mobile (em vez de canto direito) */
+  .toast-region {
+    right: var(--space-md);
+    left: var(--space-md);
+    bottom: var(--space-md);
+    align-items: stretch;
+  }
+
+  .toast {
+    min-width: 0;
+    max-width: 100%;
+  }
+}
+
+/* Anti-zoom iOS: input ≥16px e touch targets ≥44px em ponteiros grossos.
+   Aplicado por (pointer: coarse) — mais confiável que media de viewport
+   pra alvos como Surface, iPad com Smart Keyboard removido, etc. */
+@media (pointer: coarse) {
+  .search-input,
+  .auth-input,
+  .improve-overlay-input {
+    font-size: 16px;
+  }
+
+  .search-field {
+    padding: 8px var(--space-xs);
+  }
+
+  .auth-input-wrap {
+    padding: 11px var(--space-sm);
+  }
+
+  /* Botões de chrome: altura mínima sem perder a estética densa */
+  .btn-ghost,
+  .btn-primary,
+  .auth-tab,
+  .auth-google,
+  .key-action,
+  .provider-option,
+  .session-link,
+  .session-logout,
+  .settings-back,
+  .legacy-banner-btn,
+  .auth-panel-link,
+  .action-new {
+    min-height: var(--tap);
+  }
+
+  .icon-btn {
+    width: 36px;
+    height: 36px;
+  }
+
+  /* Lista do drawer: tap target maior; botão remover sempre visível e tocável */
+  .toc-item {
+    min-height: var(--tap);
+  }
+
+  .toc-item-move,
+  .toc-item-remove {
+    width: 32px;
+    height: 32px;
+  }
+
+  /* Theme switch e ações da sessão: padding clicável */
+  .theme-option {
+    padding: var(--space-2xs) var(--space-xs);
+  }
+
+  /* Reveal de senha: área mínima */
+  .auth-reveal {
+    padding: 6px 8px;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Sessão (sidebar-foot) — usuário + sair
+   -------------------------------------------------------------------------- */
+
+.session-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-sm);
+  padding-bottom: var(--space-sm);
+  margin-bottom: var(--space-sm);
+  border-bottom: 1px solid var(--rule);
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+}
+
+.session-user {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0;
+  color: var(--ink-3);
+  /* flex: 1 1 0 + min-width:0 — sem isso o flex-basis vira o conteúdo
+     (auto), o ellipsis do email não dispara e a row empurra "sair" pra
+     fora do <aside> em sidebars de 320px. Defesa em profundidade: vale
+     mesmo com o container query de wrap em ≤290px, porque o threshold
+     do CQ não dispara em --sidebar-w mínimo de 320 no desktop. */
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.session-user-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+.session-logout {
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 3px;
+  padding: 2px var(--space-xs);
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  color: var(--ink-3);
+  cursor: pointer;
+  transition: color var(--dur-fast) var(--ease-out-quart),
+    border-color var(--dur-fast) var(--ease-out-quart);
+}
+
+.session-logout:hover {
+  color: var(--ink-1);
+  border-color: var(--rule);
+}
+
+.session-logout:active {
+  background: var(--bg-sunk);
+  border-color: var(--rule-strong);
+}
+
+/* --------------------------------------------------------------------------
+   Auth — toggle login/criar, botão Google (preparado p/ Fase 3)
+   -------------------------------------------------------------------------- */
+
+.auth-tabs {
+  position: relative;
+  display: flex;
+  width: 100%;
+  gap: 0;
+  margin-bottom: var(--space-md);
+  border: 1px solid var(--rule);
+  border-radius: 3px;
+  overflow: hidden;
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+}
+
+/* Indicador âmbar — linha de 1px que desliza entre as abas conforme o
+   modo. Conecta visualmente login → criar conta sem ruído extra. */
+.auth-tabs::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 50%;
+  height: 1px;
+  background: var(--accent);
+  transform: translateX(0%);
+  transition: transform var(--dur-base) var(--ease-out-expo);
+  pointer-events: none;
+}
+
+.auth-tabs[data-mode="register"]::after {
+  transform: translateX(100%);
+}
+
+.auth-tab {
+  flex: 1 1 0;
+  min-height: 36px;
+  background: transparent;
+  border: 0;
+  padding: var(--space-sm) var(--space-md);
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: 500;
+  text-align: center;
+  color: var(--ink-3);
+  cursor: pointer;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  transition: color var(--dur-fast) var(--ease-out-quart),
+    background-color var(--dur-fast) var(--ease-out-quart),
+    transform var(--dur-instant) var(--ease-out-quart);
+}
+
+.auth-tab + .auth-tab {
+  border-left: 1px solid var(--rule);
+}
+
+.auth-tab:hover:not([aria-selected="true"]) {
+  color: var(--ink-2);
+  background: color-mix(in oklch, var(--bg-hover) 50%, transparent);
+}
+
+.auth-tab[aria-selected="true"] {
+  color: var(--ink-1);
+  background: var(--bg-hover);
+  font-weight: 600;
+}
+
+.auth-tab:focus-visible {
+  outline: none;
+  box-shadow: inset 0 0 0 1px var(--focus-ring);
+}
+
+.auth-tab:active {
+  transform: translateY(1px);
+}
+
+.auth-sep {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  margin: var(--space-md) 0;
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  color: var(--ink-4);
+}
+
+.auth-sep::before,
+.auth-sep::after {
+  content: "";
+  flex: 1;
+  border-top: 1px solid var(--rule);
+}
+
+.auth-google {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 36px;
+  padding: 10px var(--space-md);
+  background: transparent;
+  border: 1px solid var(--rule);
+  border-radius: 3px;
+  font-family: var(--font-sans);
+  font-size: var(--fs-sm);
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  color: var(--ink-1);
+  text-decoration: none;
+  cursor: pointer;
+  transition: border-color var(--dur-fast) var(--ease-out-quart),
+    background-color var(--dur-fast) var(--ease-out-quart);
+}
+
+.auth-google:hover {
+  border-color: var(--ink-3);
+  background: var(--bg-hover);
+}
+
+.auth-google-glyph {
+  position: absolute;
+  left: var(--space-md);
+  top: 50%;
+  transform: translateY(-50%);
+  font-family: var(--font-mono);
+  font-weight: 600;
+  line-height: 1;
+  color: var(--ink-2);
+}
+
+/* --------------------------------------------------------------------------
+   Session row — extensão com link pra /settings
+   -------------------------------------------------------------------------- */
+
+.session-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  flex-shrink: 0;
+}
+
+.session-link {
+  color: var(--ink-3);
+  text-decoration: none;
+  padding: 2px var(--space-xs);
+  border: 1px solid transparent;
+  border-radius: 3px;
+  transition: color var(--dur-fast) var(--ease-out-quart),
+    border-color var(--dur-fast) var(--ease-out-quart);
+}
+
+.session-link:hover {
+  color: var(--ink-1);
+  border-color: var(--rule);
+}
+
+.session-link:active {
+  background: var(--bg-sunk);
+  border-color: var(--rule-strong);
+}
+
+.session-sep {
+  color: var(--ink-4);
+}
+
+/* --------------------------------------------------------------------------
+   Página de configurações
+   -------------------------------------------------------------------------- */
+
+.settings-body {
+  /* Override do body global (height: var(--app-h) + overflow: hidden travados
+     pra casca do editor). Aqui o conteúdo pode passar da viewport — libera
+     o scroll vertical mantendo o clamp horizontal. */
+  height: auto;
+  min-height: var(--app-h);
+  overflow: visible;
+  overflow-x: hidden;
+  background: var(--bg);
+}
+
+.settings {
+  max-width: 820px;
+  margin: 0 auto;
+  padding: var(--space-xl) var(--space-lg) var(--space-2xl);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xl);
+}
+
+.settings-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-md);
+  flex-wrap: wrap;
+}
+
+.settings-back {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  font-family: var(--font-mono);
+  font-size: var(--fs-sm);
+  color: var(--ink-3);
+  text-decoration: none;
+  padding: var(--space-xs) var(--space-sm);
+  border: 1px solid var(--rule);
+  border-radius: 3px;
+  transition: color var(--dur-fast) var(--ease-out-quart),
+    border-color var(--dur-fast) var(--ease-out-quart);
+}
+
+.settings-back:hover {
+  color: var(--ink-1);
+  border-color: var(--ink-3);
+}
+
+.settings-back-caret {
+  transform: rotate(180deg);
+  display: inline-block;
+}
+
+.settings-status {
+  margin: 0;
+}
+
+.settings-title {
+  font-family: var(--font-mono);
+  font-size: var(--fs-2xl);
+  font-weight: 600;
+  color: var(--ink-1);
+  letter-spacing: -0.01em;
+  margin: 0;
+}
+
+.settings-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  padding: var(--space-lg);
+  background: var(--bg-elev);
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+}
+
+.settings-section-title {
+  font-family: var(--font-mono);
+  font-size: var(--fs-base);
+  font-weight: 600;
+  color: var(--ink-1);
+  margin: 0;
+  letter-spacing: -0.005em;
+}
+
+.settings-section-prefix {
+  color: var(--ink-4);
+}
+
+.settings-hint {
+  font-family: var(--font-sans);
+  font-size: var(--fs-sm);
+  color: var(--ink-3);
+  margin: 0;
+}
+
+.settings-kv {
+  display: grid;
+  grid-template-columns: minmax(110px, auto) 1fr;
+  gap: var(--space-sm) var(--space-md);
+  font-family: var(--font-mono);
+  font-size: var(--fs-sm);
+  margin: 0;
+}
+
+.settings-kv-row {
+  display: contents;
+}
+
+.settings-kv-key {
+  color: var(--ink-4);
+}
+
+.settings-kv-val {
+  color: var(--ink-1);
+  margin: 0;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+}
+
+.settings-kv-val.is-empty {
+  color: var(--ink-3);
+}
+
+.settings-actions {
+  display: flex;
+  gap: var(--space-sm);
+  justify-content: flex-end;
+  padding-top: var(--space-md);
+  border-top: 1px dashed var(--rule);
+}
+
+/* Provider padrão — radio mono */
+.provider-pick {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-xs);
+  font-family: var(--font-mono);
+  font-size: var(--fs-sm);
+}
+
+.provider-option {
+  background: transparent;
+  border: 1px solid var(--rule);
+  border-radius: 3px;
+  padding: var(--space-xs) var(--space-sm);
+  color: var(--ink-3);
+  cursor: pointer;
+  transition: color var(--dur-fast) var(--ease-out-quart),
+    border-color var(--dur-fast) var(--ease-out-quart),
+    background-color var(--dur-fast) var(--ease-out-quart);
+}
+
+.provider-option:hover {
+  color: var(--ink-1);
+  border-color: var(--ink-3);
+}
+
+.provider-option.is-active {
+  color: var(--accent);
+  border-color: var(--accent);
+  background: color-mix(in oklch, var(--accent) 10%, transparent);
+}
+
+.provider-sep {
+  color: var(--ink-4);
+}
+
+/* Lista de chaves */
+.keys-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.key-row {
+  display: grid;
+  /* caret · provider · display · status · spacer · actions */
+  grid-template-columns:
+    auto
+    minmax(7rem, auto)
+    minmax(5rem, auto)
+    minmax(10rem, auto)
+    1fr
+    auto;
+  column-gap: var(--space-md);
+  align-items: center;
+  padding: var(--space-sm) 0;
+  font-family: var(--font-mono);
+  font-size: var(--fs-sm);
+  border-bottom: 1px dashed var(--rule);
+}
+
+.key-row:last-child {
+  border-bottom: 0;
+}
+
+.key-caret {
+  color: var(--ink-4);
+}
+
+.key-row.is-connected .key-caret {
+  color: var(--accent);
+}
+
+.key-provider {
+  color: var(--ink-1);
+  font-weight: 500;
+}
+
+.key-display {
+  color: var(--ink-2);
+}
+
+.key-row:not(.is-connected) .key-display {
+  color: var(--ink-4);
+}
+
+.key-status {
+  color: var(--ink-3);
+}
+
+.key-actions {
+  display: inline-flex;
+  gap: var(--space-xs);
+  justify-self: end;
+}
+
+.key-action {
+  background: transparent;
+  border: 1px solid var(--rule);
+  border-radius: 3px;
+  padding: 2px var(--space-xs);
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  color: var(--ink-2);
+  cursor: pointer;
+  transition: color var(--dur-fast) var(--ease-out-quart),
+    border-color var(--dur-fast) var(--ease-out-quart);
+}
+
+.key-action:hover {
+  color: var(--ink-1);
+  border-color: var(--ink-3);
+}
+
+.key-action--danger {
+  color: var(--ink-3);
+}
+
+.key-action--danger:hover {
+  color: var(--danger);
+  border-color: var(--danger);
+}
+
+.key-form {
+  grid-column: 1 / -1;
+  display: flex;
+  gap: var(--space-sm);
+  align-items: stretch;
+  padding: var(--space-sm) 0 0;
+}
+
+.key-form .auth-input-wrap {
+  flex: 1;
+}
+
+.key-input {
+  width: 100%;
+}
+
+.key-submit {
+  padding: var(--space-xs) var(--space-md);
+}
+
+/* Toast interno da página settings */
+.settings-toast-region {
+  position: fixed;
+  bottom: var(--space-lg);
+  left: 50%;
+  transform: translateX(-50%);
+  padding: var(--space-xs) var(--space-md);
+  background: var(--bg-elev);
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  font-family: var(--font-mono);
+  font-size: var(--fs-sm);
+  color: var(--ink-1);
+  box-shadow: var(--shadow-card);
+  z-index: 10;
+}
+
+.settings-toast-region[data-variant="error"] {
+  border-color: var(--danger);
+  color: var(--danger);
+}
+
+.settings-toast-region[data-variant="ok"] {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+@media (max-width: 720px) {
+  .settings {
+    padding: var(--space-lg) var(--space-md) var(--space-2xl);
+    gap: var(--space-lg);
+  }
+
+  .settings-section {
+    padding: var(--space-md);
+  }
+
+  .settings-kv {
+    grid-template-columns: minmax(80px, auto) 1fr;
+    gap: var(--space-xs) var(--space-sm);
+  }
+
+  .key-row {
+    grid-template-columns: auto 1fr auto;
+    grid-template-areas:
+      "caret provider actions"
+      ". display status";
+    row-gap: var(--space-xs);
+    padding: var(--space-md) 0;
+  }
+  .key-caret { grid-area: caret; }
+  .key-provider { grid-area: provider; }
+  .key-display { grid-area: display; }
+  .key-status { grid-area: status; }
+  .key-actions { grid-area: actions; }
+
+  .key-form {
+    grid-column: 1 / -1;
+    flex-wrap: wrap;
+    gap: var(--space-xs);
+  }
+
+  .key-form .auth-input-wrap {
+    flex: 1 1 100%;
+  }
+
+  .key-form .key-submit,
+  .key-form .btn-ghost {
+    flex: 1;
+    justify-content: center;
+  }
+
+  /* Provider pick — separadores ficam confusos quando wrappa; some no mobile */
+  .provider-pick {
+    gap: var(--space-xs);
+  }
+
+  .provider-sep {
+    display: none;
+  }
+
+  .provider-option {
+    flex: 0 1 auto;
+  }
+
+  .settings-toast-region {
+    left: var(--space-md);
+    right: var(--space-md);
+    bottom: var(--space-md);
+    transform: none;
+    text-align: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .settings {
+    padding: var(--space-md) var(--space-sm) var(--space-xl);
+  }
+
+  .settings-section {
+    padding: var(--space-sm) var(--space-md);
+    border-radius: 3px;
+  }
+
+  .settings-title {
+    font-size: 1.5rem;
+  }
+
+  /* key-display pode estourar com chave longa; quebra controlada */
+  .key-display {
+    word-break: break-all;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Botão "melhorar" + popover de provider
+   -------------------------------------------------------------------------- */
+
+.improve-wrap {
+  position: relative;
+  display: inline-flex;
+}
+
+#btn-improve[disabled] {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.improve-popover {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  min-width: 240px;
+  padding: var(--space-2xs);
+  background: var(--bg-elev);
+  border: 1px solid var(--rule-strong);
+  border-radius: 4px;
+  box-shadow: var(--shadow-card);
+  font-family: var(--font-mono);
+  font-size: var(--fs-sm);
+}
+
+/* Zona meta — label do popover, separada das ações por hairline + ar */
+.improve-popover-hint {
+  color: var(--ink-4);
+  padding: var(--space-xs) var(--space-sm) var(--space-2xs);
+  margin: 0 0 var(--space-2xs);
+  font-size: var(--fs-xs);
+  letter-spacing: 0.01em;
+  border-bottom: 1px solid var(--rule);
+}
+
+/* Zona ações — linhas densas estilo terminal, ~30px de altura */
+.improve-popover-option {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  column-gap: var(--space-sm);
+  align-items: center;
+  padding: 6px var(--space-sm);
+  background: transparent;
+  border: 0;
+  border-radius: 3px;
+  font-family: inherit;
+  font-size: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    background-color var(--dur-fast) var(--ease-out-quart),
+    color var(--dur-fast) var(--ease-out-quart);
+}
+
+.improve-popover-option:hover:not(:disabled) {
+  background: var(--bg-hover);
+}
+
+.improve-popover-option:focus-visible {
+  outline: 1px solid var(--accent);
+  outline-offset: -1px;
+  background: var(--bg-hover);
+}
+
+.improve-popover-option:disabled {
+  cursor: not-allowed;
+}
+
+/* Default em três dimensões redundantes: caret âmbar + label peso/brilho + status âmbar-dim */
+.improve-popover-option.is-default .improve-opt-caret {
+  color: var(--accent);
+}
+
+.improve-popover-option.is-default .improve-opt-label {
+  color: var(--ink-1);
+  font-weight: 600;
+}
+
+.improve-popover-option.is-default .improve-opt-status {
+  color: var(--accent-dim);
+}
+
+.improve-opt-caret {
+  color: var(--ink-4);
+}
+
+.improve-opt-label {
+  color: var(--ink-2);
+}
+
+.improve-popover-option:hover:not(:disabled) .improve-opt-label {
+  color: var(--ink-1);
+}
+
+.improve-opt-status {
+  color: var(--ink-4);
+  font-size: var(--fs-xs);
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  justify-self: end;
+}
+
+.improve-popover-option:hover:not(:disabled) .improve-opt-status {
+  color: var(--ink-3);
+}
+
+.improve-popover-option:disabled .improve-opt-label,
+.improve-popover-option:disabled .improve-opt-status,
+.improve-popover-option:disabled .improve-opt-caret {
+  color: var(--ink-4);
+}
+
+/* Zona footer — claramente separada da lista de ações */
+.improve-popover-link {
+  display: block;
+  margin: var(--space-2xs) 0 0;
+  padding: var(--space-xs) var(--space-sm) calc(var(--space-2xs) + 2px);
+  border-top: 1px solid var(--rule);
+  font-family: inherit;
+  font-size: var(--fs-xs);
+  letter-spacing: 0.01em;
+  color: var(--ink-3);
+  text-decoration: none;
+  transition: color var(--dur-fast) var(--ease-out-quart);
+}
+
+.improve-popover-link:hover {
+  color: var(--ink-1);
+}
+
+.improve-popover-link:focus-visible {
+  color: var(--ink-1);
+  outline: 1px solid var(--accent);
+  outline-offset: -1px;
+  border-radius: 3px;
+}
+
+/* --------------------------------------------------------------------------
+   Slash menu — comandos básicos no editor (estilo Notion / Raycast)
+   -------------------------------------------------------------------------- */
+
+.cmd-menu {
+  position: fixed;
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  min-width: 240px;
+  max-width: 280px;
+  max-height: 280px;
+  padding: var(--space-xs);
+  background: var(--bg-elev);
+  border: 1px solid var(--rule-strong);
+  border-radius: 4px;
+  box-shadow: var(--shadow-card);
+  font-family: var(--font-mono);
+  font-size: var(--fs-sm);
+  overflow: auto;
+}
+
+.cmd-menu[hidden] {
+  display: none;
+}
+
+.cmd-menu-hint {
+  color: var(--ink-4);
+  padding: var(--space-2xs) var(--space-xs);
+  margin: 0 0 var(--space-2xs);
+  font-size: var(--fs-xs);
+}
+
+.cmd-menu-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.cmd-menu-empty {
+  color: var(--ink-4);
+  padding: var(--space-xs) var(--space-sm);
+  font-size: var(--fs-xs);
+}
+
+.cmd-menu-option {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: var(--space-sm);
+  align-items: center;
+  width: 100%;
+  padding: var(--space-xs) var(--space-sm);
+  background: transparent;
+  border: 0;
+  border-radius: 3px;
+  font-family: inherit;
+  font-size: inherit;
+  color: var(--ink-1);
+  text-align: left;
+  cursor: pointer;
+  transition: background-color var(--dur-fast) var(--ease-out-quart);
+}
+
+.cmd-menu-option:hover,
+.cmd-menu-option.is-active {
+  background: var(--bg-hover);
+}
+
+.cmd-menu-option.is-active .cmd-menu-caret {
+  color: var(--accent);
+}
+
+.cmd-menu-caret {
+  color: var(--ink-4);
+}
+
+.cmd-menu-alias {
+  color: var(--ink-3);
+  font-size: var(--fs-xs);
+}
+
+/* --------------------------------------------------------------------------
+   Overlay de improve (original vs melhorado)
+   -------------------------------------------------------------------------- */
+
+.improve-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  display: grid;
+  place-items: center;
+  background: color-mix(in oklch, var(--bg) 70%, transparent);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+  padding: var(--space-lg);
+  /* dvh evita o card "pular" quando barras do iOS aparecem */
+  height: var(--app-h);
+  overflow: auto;
+}
+
+.improve-overlay-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  width: min(1100px, 100%);
+  max-height: calc(var(--app-h) - var(--space-xl));
+  padding: var(--space-lg);
+  background: var(--bg-elev);
+  border: 1px solid var(--rule-strong);
+  border-radius: 4px;
+  box-shadow: var(--shadow-card);
+}
+
+.improve-overlay-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-md);
+}
+
+.improve-overlay-title {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: var(--fs-base);
+  font-weight: 500;
+  color: var(--ink-2);
+  letter-spacing: -0.005em;
+}
+
+.improve-overlay-prefix {
+  color: var(--ink-4);
+  margin-right: var(--space-xs);
+}
+
+.improve-overlay-providers {
+  display: inline-flex;
+  gap: 4px;
+  margin-left: var(--space-xs);
+  vertical-align: baseline;
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+}
+
+.improve-overlay-providers:empty {
+  display: none;
+}
+
+.improve-overlay-provider {
+  background: transparent;
+  border: 1px solid var(--rule);
+  border-radius: 3px;
+  padding: 1px 8px;
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  color: var(--ink-3);
+  cursor: pointer;
+  transition:
+    background-color var(--dur-fast) var(--ease-out-quart),
+    border-color var(--dur-fast) var(--ease-out-quart),
+    color var(--dur-fast) var(--ease-out-quart);
+}
+
+.improve-overlay-provider:hover:not(:disabled):not([aria-pressed="true"]) {
+  border-color: var(--rule-strong);
+  color: var(--ink-1);
+}
+
+.improve-overlay-provider:focus-visible {
+  outline: 1px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.improve-overlay-provider[aria-pressed="true"] {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-on);
+}
+
+.improve-overlay-provider:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.improve-overlay-close {
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 3px;
+  padding: 0 8px;
+  font-family: var(--font-mono);
+  font-size: var(--fs-md);
+  line-height: 1;
+  color: var(--ink-3);
+  cursor: pointer;
+  transition: color var(--dur-fast) var(--ease-out-quart),
+    border-color var(--dur-fast) var(--ease-out-quart);
+}
+
+.improve-overlay-close:hover {
+  color: var(--ink-1);
+  border-color: var(--rule);
+}
+
+.improve-overlay-instruction {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: var(--space-sm);
+  align-items: center;
+}
+
+.improve-overlay-label {
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  color: var(--ink-4);
+  white-space: nowrap;
+}
+
+.improve-overlay-input {
+  background: var(--bg-sunk);
+  border: 1px solid var(--rule);
+  border-radius: 3px;
+  padding: var(--space-xs) var(--space-sm);
+  font-family: var(--font-mono);
+  font-size: var(--fs-sm);
+  color: var(--ink-1);
+  outline: none;
+  transition: border-color var(--dur-fast) var(--ease-out-quart);
+}
+
+.improve-overlay-input:focus {
+  border-color: var(--accent);
+}
+
+.improve-overlay-run {
+  padding: var(--space-xs) var(--space-md);
+}
+
+.improve-overlay-body {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-md);
+  min-height: 280px;
+  overflow: hidden;
+}
+
+.improve-overlay-pane {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  min-width: 0;
+  background: var(--bg-sunk);
+  border: 1px solid var(--rule);
+  border-radius: 3px;
+  padding: var(--space-md);
+  overflow: hidden;
+}
+
+.improve-overlay-pane--result {
+  border-color: color-mix(in oklch, var(--accent) 25%, var(--rule));
+}
+
+.improve-overlay-pane-head {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  color: var(--ink-3);
+}
+
+.improve-overlay-pane-prefix {
+  color: var(--ink-4);
+}
+
+.improve-overlay-pre {
+  margin: 0;
+  flex: 1;
+  min-height: 160px;
+  max-height: 50dvh;
+  overflow: auto;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  font-family: var(--font-mono);
+  font-size: var(--fs-sm);
+  line-height: var(--lh-mono);
+  color: var(--ink-1);
+  -webkit-overflow-scrolling: touch;
+}
+
+.improve-overlay-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-md);
+  padding-top: var(--space-xs);
+  border-top: 1px solid var(--rule);
+}
+
+.improve-overlay-meta {
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  color: var(--ink-4);
+}
+
+.improve-overlay-actions {
+  display: inline-flex;
+  gap: var(--space-sm);
+}
+
+@media (max-width: 720px) {
+  .improve-overlay {
+    padding: var(--space-sm);
+  }
+
+  .improve-overlay-card {
+    padding: var(--space-md);
+    gap: var(--space-sm);
+    /* Em mobile, ocupar quase toda a viewport: o conteúdo é o foco */
+    max-height: calc(var(--app-h) - var(--space-md));
+    width: 100%;
+  }
+
+  .improve-overlay-body {
+    grid-template-columns: 1fr;
+    gap: var(--space-sm);
+  }
+
+  .improve-overlay-pane {
+    padding: var(--space-sm);
+    min-height: 0;
+  }
+
+  .improve-overlay-pre {
+    min-height: 100px;
+    max-height: 30dvh;
+  }
+
+  .improve-overlay-instruction {
+    grid-template-columns: 1fr;
+    gap: var(--space-xs);
+  }
+
+  .improve-overlay-label {
+    white-space: normal;
+  }
+
+  .improve-overlay-run {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .improve-overlay-foot {
+    flex-wrap: wrap;
+    gap: var(--space-sm);
+  }
+
+  .improve-overlay-meta {
+    flex: 1 1 100%;
+    order: 2;
+  }
+
+  .improve-overlay-actions {
+    flex: 1 1 100%;
+    order: 1;
+    justify-content: space-between;
+  }
+
+  .improve-overlay-actions .btn-ghost,
+  .improve-overlay-actions .btn-primary {
+    flex: 1;
+    justify-content: center;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Legacy banner — import one-time do localStorage
+   -------------------------------------------------------------------------- */
+
+.legacy-banner {
+  position: fixed;
+  top: var(--space-md);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 25;
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-xs) var(--space-md);
+  max-width: min(720px, calc(100% - 2rem));
+  background: var(--bg-elev);
+  border: 1px solid var(--accent);
+  border-radius: 4px;
+  box-shadow: var(--shadow-card);
+  font-family: var(--font-mono);
+  font-size: var(--fs-sm);
+  color: var(--ink-1);
+}
+
+.legacy-banner-prefix {
+  color: var(--ink-4);
+}
+
+.legacy-banner-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.legacy-banner-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  white-space: nowrap;
+}
+
+.legacy-banner-btn {
+  background: transparent;
+  border: 1px solid var(--rule);
+  border-radius: 3px;
+  padding: 2px var(--space-xs);
+  font-family: inherit;
+  font-size: var(--fs-xs);
+  color: var(--accent);
+  cursor: pointer;
+  transition: color var(--dur-fast) var(--ease-out-quart),
+    border-color var(--dur-fast) var(--ease-out-quart);
+}
+
+.legacy-banner-btn:hover {
+  border-color: var(--accent);
+}
+
+.legacy-banner-btn--muted {
+  color: var(--ink-3);
+}
+
+.legacy-banner-btn--muted:hover {
+  color: var(--ink-1);
+  border-color: var(--ink-3);
+}
+
+.legacy-banner-btn[disabled] {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.legacy-banner-sep {
+  color: var(--ink-4);
+}
+
+@media (max-width: 720px) {
+  .legacy-banner {
+    top: var(--space-sm);
+    left: var(--space-sm);
+    right: var(--space-sm);
+    transform: none;
+    max-width: none;
+    flex-wrap: wrap;
+    gap: var(--space-xs);
+  }
+
+  .legacy-banner-text {
+    flex: 1 1 100%;
+  }
+
+  .legacy-banner-actions {
+    flex: 1 1 100%;
+    justify-content: flex-end;
+  }
+}
+
+/* ==========================================================================
+   Adaptação cross-device — landscape mobile, contraste, print
+   ========================================================================== */
+
+/* Landscape em telefone (altura baixa): boot log atrapalha mais que ajuda;
+   reduz o aside da auth e elimina a animação do cursor. */
+@media (orientation: landscape) and (max-height: 520px) {
+  .auth-aside {
+    padding-top: var(--space-md);
+    padding-bottom: var(--space-md);
+    gap: var(--space-sm);
+  }
+
+  .auth-log {
+    display: none;
+  }
+
+  .auth-aside-foot {
+    display: none;
+  }
+
+  .auth-main {
+    padding-top: var(--space-md);
+    padding-bottom: var(--space-md);
+  }
+
+  /* Drawer ocupa tudo na largura quando orientação muda */
+  .sidebar {
+    width: min(70vw, 360px);
+  }
+}
+
+/* Acessibilidade: contraste reforçado quando o usuário pede. */
+@media (prefers-contrast: more) {
+  :root,
+  :root[data-theme="dark"] {
+    --ink-2: oklch(88% 0.010 85);
+    --ink-3: oklch(72% 0.012 85);
+    --ink-4: oklch(56% 0.014 85);
+    --rule: oklch(42% 0.012 250);
+    --rule-strong: oklch(54% 0.014 250);
+  }
+
+  :root[data-theme="light"] {
+    --ink-2: oklch(24% 0.014 250);
+    --ink-3: oklch(38% 0.015 250);
+    --ink-4: oklch(50% 0.016 250);
+    --rule: oklch(70% 0.010 250);
+    --rule-strong: oklch(56% 0.012 250);
+  }
+
+  /* Em prefers-contrast, o focus-ring fica mais visível */
+  :focus-visible {
+    outline-width: 2px;
+  }
+}
+
+/* Telas largas (≥1440px): impede main de ficar oceanos vazios à direita. */
+@media (min-width: 1440px) {
+  :root {
+    --sidebar-w: clamp(320px, 20vw, 380px);
+  }
+
+  .editor {
+    max-width: 84ch;
+  }
+
+  .prompt-content {
+    max-width: 84ch;
+  }
+}
+
+/* Imprimir: documento limpo, só editor visível, sem cores escuras.
+   Útil pra revisar prompts em papel ou exportar via "Salvar como PDF". */
+@media print {
+  :root {
+    --bg: #fff;
+    --bg-elev: #fff;
+    --bg-sunk: #fff;
+    --bg-hover: #fff;
+    --bg-selected: #fff;
+    --ink-1: #111;
+    --ink-2: #222;
+    --ink-3: #555;
+    --ink-4: #777;
+    --rule: #ccc;
+    --rule-strong: #999;
+    --accent: #111;
+    --accent-on: #fff;
+    --shadow-card: none;
+  }
+
+  body {
+    background: #fff;
+    color: #111;
+  }
+
+  /* Esconde tudo que é chrome — sidebar, header, ações, toasts, overlays */
+  .sidebar,
+  .sidebar-backdrop,
+  .sidebar-reopen,
+  .main-head,
+  .main-actions,
+  .toast-region,
+  .legacy-banner,
+  .improve-overlay,
+  .improve-popover,
+  .auth-aside,
+  .settings-head,
+  .settings-actions {
+    display: none !important;
+  }
+
+  .app {
+    display: block;
+    grid-template-columns: none;
+  }
+
+  .main {
+    padding: 0;
+    overflow: visible;
+    min-height: 0;
+    background: #fff;
+  }
+
+  .editor {
+    max-width: 100%;
+    animation: none;
+  }
+
+  .prompt-title,
+  .prompt-content {
+    color: #111;
+  }
+
+  .prompt-content pre,
+  .prompt-content code {
+    background: #f6f6f6;
+    border-color: #ddd;
+  }
+
+  /* Impede quebra de página dentro de blocos importantes */
+  .prompt-title,
+  h1, h2, h3 {
+    page-break-after: avoid;
+  }
+
+  .prompt-content p,
+  .prompt-content li,
+  .prompt-content pre {
+    page-break-inside: avoid;
+  }
+
+  a {
+    color: #111;
+  }
+
+  a[href]::after {
+    /* Mostra a URL ao lado do link em material impresso */
+    content: " (" attr(href) ")";
+    font-size: 0.85em;
+    color: #555;
+  }
+
+  a[href^="#"]::after,
+  a[href^="javascript:"]::after {
+    content: "";
+  }
+}

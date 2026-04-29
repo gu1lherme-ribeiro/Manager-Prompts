@@ -1,0 +1,44 @@
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Node deps são reinstaladas dentro do build
+node_modules
+**/node_modules
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+*.log
+
+# .env locais — secrets entram via env vars do Easypanel
+.env
+.env.*
+**/.env
+**/.env.*
+
+# Editores / IDE
+.vscode
+.idea
+*.swp
+.DS_Store
+Thumbs.db
+
+# Docs e artefatos de deploy
+README.md
+DEPLOY.md
+DEPLOY_EASYPANEL.md
+docker-compose*.yml
+Dockerfile
+.dockerignore
+
+# Claude Code workspace
+.claude
+.claude-secrets
+CLAUDE.md
+.impeccable.md
+Settings
+
+# Testes / coverage
+coverage
+.nyc_output

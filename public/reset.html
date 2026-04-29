@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="dark light" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg?v=3" sizes="any" />
+    <link rel="stylesheet" href="/static/css/style.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Red+Hat+Mono:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap"
+      rel="stylesheet"
+    />
+    <title>Nova Senha · Manager-Prompts</title>
+    <script src="/static/js/theme-boot.js"></script>
+  </head>
+  <body class="auth-body">
+    <main class="auth" aria-label="Definir nova senha no manager-prompts">
+      <aside class="auth-aside">
+        <header class="auth-aside-head">
+          <div class="wordmark">
+            <div class="wordmark-content">
+              <h1 class="wordmark-name">Manager<span class="wordmark-dash">-</span>Prompts</h1>
+              <p class="wordmark-meta">v2.0 · Nova Senha</p>
+            </div>
+          </div>
+        </header>
+
+        <div class="auth-log" aria-hidden="true">
+          <p class="auth-log-line">
+            <span class="auth-log-tag">auth</span>
+            <span class="auth-log-msg">link de reset acessado</span>
+          </p>
+          <p class="auth-log-line" id="log-token-line">
+            <span class="auth-log-tag" id="log-token-tag">token</span>
+            <span class="auth-log-msg" id="log-token-msg">validando…</span>
+          </p>
+          <p class="auth-log-line">
+            <span class="auth-log-tag">policy</span>
+            <span class="auth-log-msg">senha com 8 ou mais caracteres</span>
+          </p>
+          <p class="auth-log-line auth-log-line--wait" id="log-wait-line">
+            <span class="auth-log-tag auth-log-tag--active">reset</span>
+            <span class="auth-log-msg">
+              aguardando nova senha<span class="auth-cursor"></span>
+            </span>
+          </p>
+        </div>
+
+        <footer class="auth-aside-foot">
+          <p class="auth-meta">
+            <span class="auth-meta-key">sessions</span>
+            <span class="auth-meta-sep" aria-hidden="true">·</span>
+            <span>todas serão encerradas após trocar a senha</span>
+          </p>
+          <p class="auth-meta">
+            <span class="auth-meta-key">single-use</span>
+            <span class="auth-meta-sep" aria-hidden="true">·</span>
+            <span>este link vira inválido depois de usado</span>
+          </p>
+        </footer>
+      </aside>
+
+      <section class="auth-main">
+        <div class="auth-form-wrap" id="auth-wrap">
+          <p class="main-status auth-status">
+            <span class="main-status-prefix" aria-hidden="true">$</span>
+            <span class="main-status-text">session: anônima</span>
+          </p>
+
+          <div class="auth-heading">
+            <h2 class="auth-title">Definir Nova Senha</h2>
+            <p class="auth-subtitle" id="auth-subtitle">
+              escolha uma senha forte. as sessões ativas serão derrubadas.
+            </p>
+          </div>
+
+          <!-- Estado 1: formulário (só aparece se o token estiver na URL) -->
+          <form class="auth-form" id="reset-form" autocomplete="on" novalidate hidden>
+            <div class="auth-field">
+              <label class="auth-label" for="password">Nova Senha</label>
+              <div class="auth-input-wrap">
+                <span class="auth-input-prefix" aria-hidden="true">→</span>
+                <input
+                  type="password"
+                  id="password"
+                  name="password"
+                  class="auth-input"
+                  autocomplete="new-password"
+                  minlength="8"
+                  required
+                />
+                <button
+                  type="button"
+                  class="auth-reveal"
+                  id="auth-reveal"
+                  aria-label="Mostrar senha"
+                  aria-pressed="false"
+                >
+                  Mostrar
+                </button>
+              </div>
+            </div>
+
+            <div class="auth-field">
+              <label class="auth-label" for="confirm">Confirmar Senha</label>
+              <div class="auth-input-wrap">
+                <span class="auth-input-prefix" aria-hidden="true">→</span>
+                <input
+                  type="password"
+                  id="confirm"
+                  name="confirm"
+                  class="auth-input"
+                  autocomplete="new-password"
+                  minlength="8"
+                  required
+                />
+              </div>
+            </div>
+
+            <ul class="auth-check-list" id="check-list" aria-label="Requisitos da senha">
+              <li class="auth-check-item" data-check="length">
+                <span class="auth-check-mark" aria-hidden="true">→</span>
+                <span>8+ caracteres</span>
+              </li>
+              <li class="auth-check-item" data-check="match">
+                <span class="auth-check-mark" aria-hidden="true">→</span>
+                <span>senhas coincidem</span>
+              </li>
+            </ul>
+
+            <p class="auth-error" id="auth-error" role="alert" aria-live="polite" hidden></p>
+
+            <button type="submit" class="btn-primary auth-submit" id="auth-submit" disabled>
+              Redefinir Senha
+            </button>
+          </form>
+
+          <!-- Estado 2: token ausente/inválido/expirado -->
+          <div class="auth-panel auth-panel--alert" id="reset-invalid" hidden>
+            <p class="auth-panel-title">
+              <span class="auth-panel-tag auth-panel-tag--alert" id="invalid-tag">erro</span>
+              <span id="invalid-title">link inválido</span>
+            </p>
+            <p class="auth-panel-body" id="invalid-body">
+              o link pode ter expirado, já sido usado, ou estar malformado.
+              peça um novo para continuar.
+            </p>
+            <div class="auth-panel-actions">
+              <a class="auth-panel-link" href="/forgot">Pedir Novo Link</a>
+              <a class="auth-panel-link" href="/login">Voltar Para Entrar</a>
+            </div>
+          </div>
+
+          <!-- Estado 3: sucesso -->
+          <div class="auth-panel auth-panel--ok" id="reset-done" hidden>
+            <p class="auth-panel-title">
+              <span class="auth-panel-tag auth-panel-tag--ok">ok</span>
+              senha redefinida
+            </p>
+            <p class="auth-panel-body">
+              todas as sessões ativas desta conta foram encerradas.
+              você precisa entrar de novo com a nova senha.
+            </p>
+            <div class="auth-panel-actions">
+              <a class="auth-panel-link auth-panel-link--primary" href="/login">Entrar Agora</a>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <script type="module" src="/static/js/reset.js"></script>
+  </body>
+</html>

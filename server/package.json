@@ -1,0 +1,37 @@
+{
+  "name": "manager-prompts-server",
+  "version": "2.0.0",
+  "private": true,
+  "description": "Backend do manager-prompts: auth, prompts, BYOK, improve multi-provider.",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev": "nodemon src/index.js",
+    "start": "node src/index.js",
+    "db:migrate": "prisma migrate dev",
+    "db:deploy": "prisma migrate deploy",
+    "db:generate": "prisma generate",
+    "db:studio": "prisma studio",
+    "gen:secret": "node -e \"console.log(require('crypto').randomBytes(32).toString('base64'))\"",
+    "db:set-password": "node scripts/set-db-password.mjs"
+  },
+  "dependencies": {
+    "@prisma/client": "^5.22.0",
+    "arctic": "^2.3.0",
+    "argon2": "^0.41.1",
+    "cookie-parser": "^1.4.7",
+    "express": "^4.21.1",
+    "express-rate-limit": "^7.4.1",
+    "helmet": "^8.0.0",
+    "nanoid": "^5.0.9",
+    "nodemailer": "^6.9.16",
+    "sanitize-html": "^2.14.0",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.7",
+    "prisma": "^5.22.0"
+  }
+}

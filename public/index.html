@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="dark light" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg?v=3" sizes="any" />
+    <link rel="stylesheet" href="/static/css/style.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Red+Hat+Mono:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap"
+      rel="stylesheet"
+    />
+    <title>Manager-Prompts</title>
+    <script src="https://cdn.jsdelivr.net/npm/dompurify@3.2.4/dist/purify.min.js"></script>
+  </head>
+  <body>
+    <div class="app">
+      <div class="sidebar-backdrop" id="sidebar-backdrop" aria-hidden="true"></div>
+      <aside class="sidebar" id="sidebar" aria-label="Lista de prompts">
+        <header class="sidebar-head">
+          <div class="wordmark">
+            <div class="wordmark-content">
+              <h1 class="wordmark-name">Manager<span class="wordmark-dash">-</span>Prompts</h1>
+              <p class="wordmark-meta">
+                <span id="wordmark-count">0 itens</span>
+              </p>
+            </div>
+          </div>
+          <button
+            class="icon-btn"
+            id="btn-collapse"
+            type="button"
+            aria-label="Recolher lista"
+            title="Recolher"
+          >
+            <span class="icon-btn-glyph" aria-hidden="true">❮</span>
+          </button>
+        </header>
+
+        <section class="projects-block" aria-label="Projetos">
+          <header class="projects-head">
+            <span class="projects-head-label" aria-hidden="true">// Projetos</span>
+            <button
+              type="button"
+              class="projects-add-btn"
+              id="btn-add-project"
+              aria-label="Novo projeto"
+              title="Novo projeto"
+            >+</button>
+          </header>
+          <div class="projects-filter" id="projects-filter" hidden>
+            <span class="projects-filter-prefix" aria-hidden="true">/</span>
+            <input
+              type="search"
+              class="projects-filter-input"
+              id="projects-filter-input"
+              placeholder="filtrar projetos…"
+              autocomplete="off"
+              spellcheck="false"
+              aria-label="Filtrar projetos por nome"
+            />
+          </div>
+          <ol
+            class="projects-list"
+            id="projects-list"
+            role="listbox"
+            aria-label="Filtrar por projeto"
+          ></ol>
+          <button
+            type="button"
+            class="projects-disclosure"
+            id="projects-disclosure"
+            hidden
+            aria-expanded="false"
+          >
+            <span class="projects-disclosure-prefix" aria-hidden="true">//</span>
+            <span class="projects-disclosure-text" id="projects-disclosure-text">ver todos</span>
+          </button>
+          <form class="projects-new" id="projects-new" hidden>
+            <span class="projects-new-prefix" aria-hidden="true">/</span>
+            <input
+              type="text"
+              class="projects-new-input"
+              id="projects-new-input"
+              maxlength="80"
+              autocomplete="off"
+              spellcheck="false"
+              placeholder="nome-do-projeto"
+              aria-label="Nome do novo projeto"
+            />
+          </form>
+        </section>
+
+        <section class="search-block" aria-label="Buscar">
+          <div class="search-field">
+            <span class="search-prefix" aria-hidden="true">/</span>
+            <input
+              type="search"
+              id="search-input"
+              class="search-input"
+              placeholder="buscar…"
+              autocomplete="off"
+              spellcheck="false"
+            />
+          </div>
+          <button type="button" class="action-new" id="btn-new">
+            <span class="action-new-sign" aria-hidden="true">+</span>
+            <span>Novo Prompt</span>
+          </button>
+        </section>
+
+        <nav class="toc" aria-label="Prompts salvos">
+          <ol class="toc-list" id="prompt-list" role="listbox" aria-label="Prompts"></ol>
+          <div class="toc-empty" id="toc-empty" hidden>
+            <p class="toc-empty-title">vazio</p>
+            <p class="toc-empty-hint">
+              Crie o primeiro prompt à direita — título, conteúdo, salvar.
+            </p>
+          </div>
+          <div class="toc-empty" id="toc-empty-search" hidden>
+            <p class="toc-empty-title">sem resultado</p>
+            <p class="toc-empty-hint">Limpe a busca para ver todos os itens.</p>
+          </div>
+        </nav>
+
+        <footer class="sidebar-foot">
+          <div class="session-row">
+            <span class="session-user">
+              <span id="user-display" class="session-user-name">—</span>
+            </span>
+            <span class="session-actions">
+              <a class="session-link" href="/settings">Config</a>
+              <span class="session-sep" aria-hidden="true">·</span>
+              <button type="button" class="session-logout" id="btn-logout">Sair</button>
+            </span>
+          </div>
+          <div
+            class="theme-switch"
+            role="radiogroup"
+            aria-label="Tema de exibição"
+          >
+            <span class="theme-switch-label">Tema:</span>
+            <button
+              type="button"
+              class="theme-option"
+              role="radio"
+              data-theme="light"
+              aria-checked="false"
+            >
+              Light
+            </button>
+            <span class="theme-switch-sep" aria-hidden="true">·</span>
+            <button
+              type="button"
+              class="theme-option"
+              role="radio"
+              data-theme="dark"
+              aria-checked="false"
+            >
+              Dark
+            </button>
+          </div>
+        </footer>
+      </aside>
+
+      <main class="main">
+        <header class="main-head">
+          <div class="main-head-left">
+            <button
+              class="sidebar-reopen"
+              id="btn-open"
+              type="button"
+              aria-label="Abrir lista"
+            >
+              <span aria-hidden="true" class="sidebar-reopen-caret">❯</span>
+              <span>lista</span>
+            </button>
+            <p class="main-status" id="main-meta">
+              <span class="main-status-prefix" aria-hidden="true">$</span>
+              <span class="main-status-text">Novo Prompt</span>
+            </p>
+          </div>
+          <div class="main-actions">
+            <button type="button" class="btn-ghost" id="btn-copy">
+              Copiar
+            </button>
+            <div class="improve-wrap">
+              <button type="button" class="btn-ghost" id="btn-improve" disabled>
+                Melhorar
+              </button>
+              <div class="improve-popover" id="improve-popover" role="menu" hidden>
+                <p class="improve-popover-hint">// Escolha o provider</p>
+                <button type="button" class="improve-popover-option" role="menuitem" data-provider="anthropic">
+                  <span class="improve-opt-caret" aria-hidden="true">❯</span>
+                  <span class="improve-opt-label">Anthropic</span>
+                  <span class="improve-opt-status" data-slot="status">—</span>
+                </button>
+                <button type="button" class="improve-popover-option" role="menuitem" data-provider="openai">
+                  <span class="improve-opt-caret" aria-hidden="true">❯</span>
+                  <span class="improve-opt-label">OpenAI</span>
+                  <span class="improve-opt-status" data-slot="status">—</span>
+                </button>
+                <button type="button" class="improve-popover-option" role="menuitem" data-provider="gemini">
+                  <span class="improve-opt-caret" aria-hidden="true">❯</span>
+                  <span class="improve-opt-label">Gemini</span>
+                  <span class="improve-opt-status" data-slot="status">—</span>
+                </button>
+                <a class="improve-popover-link" href="/settings">Configurar chaves →</a>
+              </div>
+            </div>
+            <button type="button" class="btn-primary" id="btn-save">
+              Salvar
+            </button>
+          </div>
+        </header>
+
+        <article class="editor">
+          <div
+            class="editable-wrapper editable-wrapper--title"
+            id="title-wrapper"
+            data-placeholder="Título"
+          >
+            <h2
+              id="prompt-title"
+              class="prompt-title"
+              contenteditable="true"
+              spellcheck="false"
+            ></h2>
+          </div>
+
+          <div
+            class="editable-wrapper editable-wrapper--content"
+            id="content-wrapper"
+            data-placeholder="escreva o prompt aqui"
+          >
+            <div
+              id="prompt-content"
+              class="prompt-content"
+              contenteditable="true"
+            ></div>
+          </div>
+        </article>
+
+      </main>
+    </div>
+
+    <div
+      class="toast-region"
+      id="toast-region"
+      aria-live="polite"
+      aria-atomic="true"
+    ></div>
+
+    <div
+      class="cmd-menu"
+      id="cmd-menu"
+      role="listbox"
+      aria-label="Inserir bloco"
+      hidden
+    >
+      <p class="cmd-menu-hint" aria-hidden="true">// blocos básicos</p>
+      <ul class="cmd-menu-list" id="cmd-menu-list" role="presentation"></ul>
+    </div>
+
+    <div class="legacy-banner" id="legacy-banner" hidden role="status" aria-live="polite">
+      <span class="legacy-banner-prefix" aria-hidden="true">//</span>
+      <span class="legacy-banner-text" id="legacy-banner-text">
+        encontramos N prompts no storage local. importar pra sua conta?
+      </span>
+      <span class="legacy-banner-actions">
+        <button type="button" class="legacy-banner-btn" id="legacy-import">importar</button>
+        <span class="legacy-banner-sep" aria-hidden="true">·</span>
+        <button type="button" class="legacy-banner-btn legacy-banner-btn--muted" id="legacy-discard">descartar</button>
+      </span>
+    </div>
+
+    <div class="improve-overlay" id="improve-overlay" hidden>
+      <div class="improve-overlay-card" role="dialog" aria-labelledby="improve-overlay-title" aria-modal="true">
+        <header class="improve-overlay-head">
+          <h2 class="improve-overlay-title" id="improve-overlay-title">
+            <span class="improve-overlay-prefix" aria-hidden="true">$</span>
+            <span data-slot="heading">melhorando…</span>
+            <span
+              class="improve-overlay-providers"
+              id="improve-overlay-providers"
+              role="tablist"
+              aria-label="trocar provider"
+            ></span>
+          </h2>
+          <button type="button" class="improve-overlay-close" id="improve-overlay-close" aria-label="Fechar">×</button>
+        </header>
+        <div class="improve-overlay-instruction">
+          <label class="improve-overlay-label" for="improve-instruction">
+            // instrução opcional (ex: mais conciso, em inglês)
+          </label>
+          <input
+            type="text"
+            class="improve-overlay-input"
+            id="improve-instruction"
+            maxlength="500"
+            autocomplete="off"
+            spellcheck="false"
+            placeholder="deixe em branco para melhoria genérica"
+          />
+          <button type="button" class="btn-primary improve-overlay-run" id="improve-overlay-run">executar</button>
+        </div>
+        <div class="improve-overlay-body">
+          <section class="improve-overlay-pane">
+            <header class="improve-overlay-pane-head">
+              <span class="improve-overlay-pane-prefix" aria-hidden="true">//</span>
+              <span>original</span>
+            </header>
+            <pre class="improve-overlay-pre" id="improve-overlay-original"></pre>
+          </section>
+          <section class="improve-overlay-pane improve-overlay-pane--result">
+            <header class="improve-overlay-pane-head">
+              <span class="improve-overlay-pane-prefix" aria-hidden="true">//</span>
+              <span data-slot="result-label">aguardando…</span>
+            </header>
+            <pre class="improve-overlay-pre" id="improve-overlay-improved"></pre>
+          </section>
+        </div>
+        <footer class="improve-overlay-foot">
+          <span class="improve-overlay-meta" id="improve-overlay-meta"></span>
+          <span class="improve-overlay-actions">
+            <button type="button" class="btn-ghost" id="improve-overlay-discard">descartar</button>
+            <button type="button" class="btn-primary" id="improve-overlay-apply" disabled>aplicar</button>
+          </span>
+        </footer>
+      </div>
+    </div>
+
+    <script type="module" src="/static/js/scripts.js"></script>
+  </body>
+</html>

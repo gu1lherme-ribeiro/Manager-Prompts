@@ -1,0 +1,108 @@
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id              String   @id @default(cuid())
+  email           String   @unique
+  passwordHash    String?
+  firstName       String?  @db.VarChar(80)
+  lastName        String?  @db.VarChar(80)
+  displayName     String?
+  googleSub       String?  @unique
+  defaultProvider String?  @db.VarChar(16)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  prompts        Prompt[]
+  projects       Project[]
+  apiKeys        UserApiKey[]
+  sessions       Session[]
+  passwordResets PasswordResetToken[]
+
+  @@index([email])
+}
+
+model Project {
+  id        String   @id @default(cuid())
+  userId    String
+  name      String   @db.VarChar(80)
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  prompts Prompt[]
+
+  @@unique([userId, name])
+  @@index([userId, sortOrder])
+  @@index([userId, updatedAt(sort: Desc)])
+}
+
+model Prompt {
+  id        String   @id
+  userId    String
+  projectId String?
+  title     String   @db.VarChar(255)
+  content   String   @db.MediumText
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  project Project? @relation(fields: [projectId], references: [id], onDelete: SetNull)
+
+  @@index([userId, updatedAt(sort: Desc)])
+  @@index([userId, projectId, updatedAt(sort: Desc)])
+}
+
+model UserApiKey {
+  id            String   @id @default(cuid())
+  userId        String
+  provider      String   @db.VarChar(16)
+  keyCiphertext Bytes
+  keyIv         Bytes
+  keyAuthTag    Bytes
+  keyLast4      String   @db.VarChar(4)
+  keyVersion    Int      @default(1)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, provider])
+}
+
+model Session {
+  id         String   @id @default(cuid())
+  userId     String
+  tokenHash  String   @unique
+  createdAt  DateTime @default(now())
+  expiresAt  DateTime
+  lastUsedAt DateTime @default(now())
+  userAgent  String?  @db.VarChar(255)
+  ip         String?  @db.VarChar(64)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+model PasswordResetToken {
+  id        String    @id @default(cuid())
+  userId    String
+  tokenHash String    @unique
+  createdAt DateTime  @default(now())
+  expiresAt DateTime
+  usedAt    DateTime?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+}

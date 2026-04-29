@@ -1,0 +1,11 @@
+<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Fundo sutil para destacar o ícone em contextos claros/escuros -->
+  <rect width="32" height="32" rx="6" fill="currentColor" fill-opacity="0.05"/>
+  
+  <!-- Símbolo de Prompt (Chevron) em Âmbar -->
+  <path d="M9 10L14 16L9 22" stroke="#d6a35c" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+  
+  <!-- Linhas de Gerenciamento (representando a organização de prompts) -->
+  <rect x="17" y="21" width="7" height="2.5" rx="1" fill="#d6a35c"/>
+  <path d="M17 11H24M17 16H21" stroke="#55503f" stroke-width="2" stroke-linecap="round"/>
+</svg>

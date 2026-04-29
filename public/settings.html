@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="dark light" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg?v=3" sizes="any" />
+    <link rel="stylesheet" href="/static/css/style.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Red+Hat+Mono:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap"
+      rel="stylesheet"
+    />
+    <title>Configurações · Manager-Prompts</title>
+    <script src="/static/js/theme-boot.js"></script>
+  </head>
+  <body class="settings-body">
+    <main class="settings" aria-labelledby="settings-title">
+      <header class="settings-head">
+        <a class="settings-back" href="/" aria-label="Voltar ao editor">
+          <span class="settings-back-caret" aria-hidden="true">❯</span>
+          <span>Voltar</span>
+        </a>
+        <p class="main-status settings-status">
+          <span class="main-status-prefix" aria-hidden="true">$</span>
+          <span class="main-status-text">Configurações</span>
+        </p>
+      </header>
+
+      <h1 id="settings-title" class="settings-title">Configurações</h1>
+
+      <section class="settings-section" aria-labelledby="sec-account">
+        <h2 id="sec-account" class="settings-section-title">
+          <span class="settings-section-prefix" aria-hidden="true">//</span> Conta
+        </h2>
+        <dl class="settings-kv">
+          <div class="settings-kv-row">
+            <dt class="settings-kv-key">E-mail</dt>
+            <dd class="settings-kv-val" id="account-email">—</dd>
+          </div>
+          <div class="settings-kv-row">
+            <dt class="settings-kv-key">Nome</dt>
+            <dd class="settings-kv-val" id="account-name">—</dd>
+          </div>
+          <div class="settings-kv-row">
+            <dt class="settings-kv-key">Google</dt>
+            <dd class="settings-kv-val" id="account-google">—</dd>
+          </div>
+          <div class="settings-kv-row">
+            <dt class="settings-kv-key">Senha</dt>
+            <dd class="settings-kv-val" id="account-password">—</dd>
+          </div>
+        </dl>
+        <div class="settings-actions">
+          <button type="button" class="btn-ghost" id="btn-logout-settings">Sair</button>
+        </div>
+      </section>
+
+      <section class="settings-section" aria-labelledby="sec-provider">
+        <h2 id="sec-provider" class="settings-section-title">
+          <span class="settings-section-prefix" aria-hidden="true">//</span> Provider Padrão
+        </h2>
+        <p class="settings-hint">
+          Escolha qual provedor é chamado por padrão ao clicar em <em>melhorar</em>.
+        </p>
+        <div class="provider-pick" role="radiogroup" aria-label="Provider padrão">
+          <button type="button" class="provider-option" role="radio" data-provider="" aria-checked="false">Nenhum</button>
+          <span class="provider-sep" aria-hidden="true">·</span>
+          <button type="button" class="provider-option" role="radio" data-provider="anthropic" aria-checked="false">Anthropic</button>
+          <span class="provider-sep" aria-hidden="true">·</span>
+          <button type="button" class="provider-option" role="radio" data-provider="openai" aria-checked="false">OpenAI</button>
+          <span class="provider-sep" aria-hidden="true">·</span>
+          <button type="button" class="provider-option" role="radio" data-provider="gemini" aria-checked="false">Gemini</button>
+        </div>
+      </section>
+
+      <section class="settings-section" aria-labelledby="sec-keys">
+        <h2 id="sec-keys" class="settings-section-title">
+          <span class="settings-section-prefix" aria-hidden="true">//</span> Chaves De API (BYOK)
+        </h2>
+        <p class="settings-hint">
+          A chave é guardada criptografada (aes-256-gcm) e nunca retorna pro navegador depois de salva.
+        </p>
+        <ul class="keys-list" id="keys-list" aria-label="Chaves por provider"></ul>
+      </section>
+
+      <p class="settings-toast-region" id="settings-toast" role="status" aria-live="polite" hidden></p>
+    </main>
+
+    <template id="tpl-key-row">
+      <li class="key-row" data-provider="">
+        <span class="key-caret" aria-hidden="true">❯</span>
+        <span class="key-provider" data-slot="provider"></span>
+        <span class="key-display" data-slot="display">—</span>
+        <span class="key-status" data-slot="status">Não conectado</span>
+        <span class="key-actions">
+          <button type="button" class="key-action" data-action="edit">Conectar</button>
+          <button type="button" class="key-action key-action--danger" data-action="remove" hidden>Remover</button>
+        </span>
+        <form class="key-form" data-slot="form" hidden>
+          <div class="auth-input-wrap">
+            <span class="auth-input-prefix" aria-hidden="true">→</span>
+            <input
+              type="password"
+              class="auth-input key-input"
+              data-slot="input"
+              autocomplete="off"
+              spellcheck="false"
+              placeholder="Cole a chave aqui"
+            />
+          </div>
+          <button type="submit" class="btn-primary key-submit" data-action="save">Salvar</button>
+          <button type="button" class="btn-ghost" data-action="cancel">Cancelar</button>
+        </form>
+      </li>
+    </template>
+
+    <script type="module" src="/static/js/settings.js"></script>
+  </body>
+</html>
