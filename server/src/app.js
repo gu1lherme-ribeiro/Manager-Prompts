@@ -77,11 +77,29 @@ export function createApp() {
   app.use("/api/settings", settingsRouter);
 
   const sendHtml = (file) => (_req, res) => res.sendFile(resolve(PUBLIC_DIR, file));
-  app.get("/", sendHtml("index.html"));
-  app.get("/login", sendHtml("login.html"));
+
+  // Páginas protegidas: sem sessão, redireciona p/ /login server-side.
+  // Evita que o HTML da app carregue e pisque antes do JS detectar 401 e mandar
+  // pro login — esse flash quebrava o layout no primeiro paint.
+  const requireAuthHtml = (file) => (req, res) => {
+    if (!req.user) {
+      const next = encodeURIComponent(req.originalUrl || "/");
+      return res.redirect(302, `/login?next=${next}`);
+    }
+    res.sendFile(resolve(PUBLIC_DIR, file));
+  };
+
+  // Páginas de auth: se já está logado, manda pra app.
+  const redirectIfAuthed = (file) => (req, res) => {
+    if (req.user) return res.redirect(302, "/");
+    res.sendFile(resolve(PUBLIC_DIR, file));
+  };
+
+  app.get("/", requireAuthHtml("index.html"));
+  app.get("/settings", requireAuthHtml("settings.html"));
+  app.get("/login", redirectIfAuthed("login.html"));
   app.get("/forgot", sendHtml("forgot.html"));
   app.get("/reset", sendHtml("reset.html"));
-  app.get("/settings", sendHtml("settings.html"));
 
   app.use((req, res) => {
     if (req.path.startsWith("/api/")) {

@@ -1,5 +1,6 @@
 import { api, endpoints, ApiError } from "/static/js/api.js";
 import { sanitizeContent } from "/static/js/sanitize.js";
+import { startIdleWatcher } from "/static/js/idle.js";
 
 const THEME_KEY = "prompts_theme";
 const LEGACY_STORAGE_KEY = "prompts_storage";
@@ -2179,12 +2180,9 @@ function bindEvents() {
     event.dataTransfer.effectAllowed = "move";
     dragState.kind = "prompt";
     item.classList.add("is-dragging");
-    // Auto-expande o rail durante o drag — sem isso o user só pode soltar nos
-    // 5 visíveis. Mantém expandido após o drop; o user recolhe quando quiser.
-    if (!state.projectsExpanded && state.projects.length > PROJECTS_COLLAPSE_LIMIT) {
-      state.projectsExpanded = true;
-      renderProjects();
-    }
+    // Auto-expansão do rail é feita no dragenter de projectsList — fazer aqui
+    // expande mesmo em "drags fantasma" (clique com mínimo tremor dispara
+    // dragstart no Windows), e a expansão persiste mesmo sem drop.
   });
 
   elements.list.addEventListener("dragend", (event) => {
@@ -2213,12 +2211,9 @@ function bindEvents() {
     event.dataTransfer.effectAllowed = "move";
     dragState.kind = "project";
     item.classList.add("is-dragging");
-    // Auto-expande pra reorder funcionar entre todos os projetos, não só
-    // o top-N visível.
-    if (!state.projectsExpanded && state.projects.length > PROJECTS_COLLAPSE_LIMIT) {
-      state.projectsExpanded = true;
-      renderProjects();
-    }
+    // Auto-expansão é tratada no dragenter de projectsList — evita expandir
+    // por um "drag fantasma" (clique com tremor de mouse no Windows dispara
+    // dragstart) e ficar com o rail aberto sem o user ter feito drag de fato.
   });
 
   elements.projectsList.addEventListener("dragend", (event) => {
@@ -2227,6 +2222,20 @@ function bindEvents() {
     dragState.kind = null;
     dragState.reorderHint = null;
     clearDropTargets();
+  });
+
+  // Auto-expande o rail quando um drag de prompt/projeto realmente entra na
+  // área — sem isso o user só conseguiria soltar nos 5 visíveis quando o
+  // rail está recolhido. Disparar no dragstart era frágil: um clique simples
+  // com leve tremor já é interpretado como dragstart pelo browser, expandindo
+  // o rail mesmo sem o user pretender mover nada.
+  elements.projectsList.addEventListener("dragenter", (event) => {
+    const kind = pickDragKind(event.dataTransfer.types);
+    if (!kind) return;
+    if (state.projectsExpanded) return;
+    if (state.projects.length <= PROJECTS_COLLAPSE_LIMIT) return;
+    state.projectsExpanded = true;
+    renderProjects();
   });
 
   elements.projectsList.addEventListener("dragover", (event) => {
@@ -2479,6 +2488,19 @@ function bindEvents() {
    Boot
    -------------------------------------------------------------------------- */
 
+function armIdleWatcher(session) {
+  const minutes = Number(session?.idleTimeoutMin || 0);
+  if (!minutes || minutes <= 0) return;
+  startIdleWatcher({
+    timeoutMs: minutes * 60 * 1000,
+    onExpire: async () => {
+      try { await endpoints.logout(); } catch { /* sessão pode já estar morta */ }
+      const next = encodeURIComponent(window.location.pathname);
+      window.location.href = `/login?next=${next}&reason=idle`;
+    },
+  });
+}
+
 async function init() {
   api.onUnauthorized = () => {
     const next = encodeURIComponent(window.location.pathname);
@@ -2497,7 +2519,7 @@ async function init() {
   syncDrawerState();
 
   try {
-    const { user } = await endpoints.me();
+    const { user, session } = await endpoints.me();
     state.currentUser = user;
     if (elements.userDisplay) {
       /* Prefere "firstName lastName"; cai pro displayName (Google OAuth costuma
@@ -2513,6 +2535,7 @@ async function init() {
       const label = fullName || user.displayName || handle;
       elements.userDisplay.textContent = label;
     }
+    armIdleWatcher(session);
   } catch (err) {
     if (err instanceof ApiError && err.status === 401) return;
     throw err;

@@ -239,15 +239,25 @@ const OAUTH_ERRORS = {
   oauth_email_unverified: "Email do google não verificado — use uma conta com email confirmado.",
   oauth_unexpected: "Falha inesperada no login com google.",
 };
+const REASON_MESSAGES = {
+  idle: "Sua sessão expirou por inatividade. Entre novamente.",
+};
+
 (function () {
   const params = new URLSearchParams(window.location.search);
   const errCode = params.get("error");
+  const reason = params.get("reason");
   if (errCode && OAUTH_ERRORS[errCode]) {
     showError(OAUTH_ERRORS[errCode]);
     params.delete("error");
-    const rest = params.toString();
-    const cleanUrl =
-      window.location.pathname + (rest ? `?${rest}` : "") + window.location.hash;
+  } else if (reason && REASON_MESSAGES[reason]) {
+    showError(REASON_MESSAGES[reason]);
+    params.delete("reason");
+  }
+  const rest = params.toString();
+  const cleanUrl =
+    window.location.pathname + (rest ? `?${rest}` : "") + window.location.hash;
+  if (cleanUrl !== window.location.pathname + window.location.search + window.location.hash) {
     window.history.replaceState({}, "", cleanUrl);
   }
 })();

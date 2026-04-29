@@ -58,6 +58,12 @@ async function meResponse(user) {
   };
 }
 
+function sessionConfig() {
+  return {
+    idleTimeoutMin: env.SESSION_IDLE_TIMEOUT_MIN,
+  };
+}
+
 async function issueAuth(res, { user, keep, req }) {
   const { token } = await createSession({
     userId: user.id,
@@ -138,7 +144,7 @@ router.post("/logout", async (req, res, next) => {
 
 router.get("/me", requireUser, async (req, res, next) => {
   try {
-    res.json({ user: await meResponse(req.user) });
+    res.json({ user: await meResponse(req.user), session: sessionConfig() });
   } catch (err) {
     next(err);
   }

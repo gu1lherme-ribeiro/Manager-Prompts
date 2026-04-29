@@ -94,6 +94,9 @@ export const env = {
   RATE_LIMIT_AUTH_MAX: Number(optional("RATE_LIMIT_AUTH_MAX", "10")),
   RATE_LIMIT_IMPROVE_MAX: Number(optional("RATE_LIMIT_IMPROVE_MAX", "20")),
 
+  // Timeout de ociosidade da sessão (em minutos). 0 desliga a checagem.
+  SESSION_IDLE_TIMEOUT_MIN: Number(optional("SESSION_IDLE_TIMEOUT_MIN", "30")),
+
   // SMTP — opcional em dev (quando ausente, o mailer cai pra stdout).
   SMTP_HOST: optional("SMTP_HOST", ""),
   SMTP_PORT: Number(optional("SMTP_PORT", "587")),

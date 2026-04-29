@@ -1,4 +1,5 @@
 import { api, endpoints, ApiError } from "/static/js/api.js";
+import { startIdleWatcher } from "/static/js/idle.js";
 
 const PROVIDERS = ["anthropic", "openai", "gemini"];
 const PROVIDER_LABELS = {
@@ -230,24 +231,41 @@ function handleErr(err, fallback) {
   showToast(msg || fallback, "error");
 }
 
+function armIdleWatcher(session) {
+  const minutes = Number(session?.idleTimeoutMin || 0);
+  if (!minutes || minutes <= 0) return;
+  startIdleWatcher({
+    timeoutMs: minutes * 60 * 1000,
+    onExpire: async () => {
+      try { await endpoints.logout(); } catch { /* sessão pode já estar morta */ }
+      window.location.href =
+        "/login?next=" + encodeURIComponent("/settings") + "&reason=idle";
+    },
+  });
+}
+
 async function init() {
   api.onUnauthorized = () => {
     window.location.href = "/login?next=" + encodeURIComponent("/settings");
   };
 
+  let session = null;
   try {
-    const [{ user }, keys] = await Promise.all([
+    const [meRes, keys] = await Promise.all([
       endpoints.me(),
       endpoints.listApiKeys(),
     ]);
-    state.user = user;
+    state.user = meRes.user;
     state.keys = keys;
+    session = meRes.session;
   } catch (err) {
     if (err instanceof ApiError && err.status === 401) return;
     showToast("Falha ao carregar configurações", "error");
     console.error(err);
     return;
   }
+
+  armIdleWatcher(session);
 
   renderAccount();
   renderDefaultProvider();

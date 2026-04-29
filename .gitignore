@@ -8,3 +8,8 @@ dist/
 # Arquivos de contexto do Claude (locais, não versionados)
 CLAUDE.md
 .impeccable.md
+
+# Documentos de deploy operacionais (contêm info específica do ambiente)
+DEPLOY.md
+DEPLOY_EASYPANEL.md
+secrets-prod.txt

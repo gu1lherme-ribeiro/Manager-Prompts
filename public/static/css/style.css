@@ -2106,18 +2106,25 @@ body {
   line-height: 1.4;
 }
 
-/* Erro inline — mono, discreto, sem alert-box */
+/* Erro inline — mono, discreto. Bloco com âncora à esquerda
+   (mesma gramática de .projects-new), não alert-box. */
 .auth-error {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-xs);
+  margin: 0;
+  padding: var(--space-2xs) var(--space-sm);
   font-family: var(--font-mono);
   font-size: var(--fs-xs);
+  line-height: 1.5;
   color: var(--danger);
-  line-height: 1.4;
-  margin: 0;
-  padding-top: var(--space-2xs);
+  border-left: 2px solid var(--danger);
+  background: color-mix(in oklch, var(--danger) 7%, transparent);
 }
 
 .auth-error::before {
-  content: "! ";
+  content: "!";
+  flex: 0 0 auto;
   font-weight: 700;
   opacity: 0.9;
 }
@@ -2385,18 +2392,19 @@ body {
 @media (max-width: 480px) {
   .auth-aside,
   .auth-main {
-    padding-left: var(--space-lg);
-    padding-right: var(--space-lg);
+    /* safe-area lateral cobre notch em landscape iOS estreito */
+    padding-left: max(var(--space-lg), env(safe-area-inset-left));
+    padding-right: max(var(--space-lg), env(safe-area-inset-right));
   }
 
   .auth-aside {
-    padding-top: var(--space-md);
+    padding-top: max(var(--space-md), env(safe-area-inset-top));
     padding-bottom: var(--space-md);
   }
 
   .auth-main {
     padding-top: var(--space-lg);
-    padding-bottom: var(--space-2xl);
+    padding-bottom: max(var(--space-2xl), env(safe-area-inset-bottom));
   }
 
   .auth-title {
@@ -2411,6 +2419,25 @@ body {
 
   .auth-form-wrap {
     max-width: 100%;
+  }
+}
+
+/* Phone muito estreito (≤360px — Galaxy S20, iPhone SE 1st gen rotated):
+   reduzir a largura mínima da tag do log que ficava roubando 3.25rem. */
+@media (max-width: 360px) {
+  .auth-log-line {
+    grid-template-columns: 2.25rem 1fr;
+    gap: var(--space-xs);
+  }
+
+  .auth-tab {
+    padding-left: var(--space-sm);
+    padding-right: var(--space-sm);
+  }
+
+  .auth-input-wrap {
+    padding-left: var(--space-xs);
+    padding-right: var(--space-xs);
   }
 }
 
@@ -2502,8 +2529,10 @@ body {
 
   .main {
     /* No drawer mode, padding-x vai para os filhos para o main-head sticky
-       poder ocupar 100% da viewport sem margem negativa (que causa overflow-x) */
-    padding: 0 0 var(--space-2xl);
+       poder ocupar 100% da viewport sem margem negativa (que causa overflow-x).
+       padding-bottom respeita home indicator (iOS) sem que o conteúdo fique
+       grudado no chassi físico. */
+    padding: 0 0 max(var(--space-2xl), env(safe-area-inset-bottom));
     gap: var(--space-md);
   }
 
@@ -2526,21 +2555,26 @@ body {
 
   /* Header do main vira sticky para o botão "lista" ficar à mão.
      Sem margem negativa: o main não tem padding-x, head ocupa full-width
-     com seu próprio padding interno. Fundo translúcido cobre o que rola. */
+     com seu próprio padding interno. Fundo translúcido cobre o que rola.
+     padding-x respeita notch lateral em landscape (iPhone com Dynamic Island
+     deitado tem ~50px de cutout à esquerda). */
   .main-head {
     position: sticky;
     top: 0;
     z-index: 5;
-    padding: var(--space-md) var(--space-lg);
+    padding: var(--space-md) max(var(--space-lg), env(safe-area-inset-right))
+      var(--space-md) max(var(--space-lg), env(safe-area-inset-left));
     background: color-mix(in oklch, var(--bg) 92%, transparent);
     backdrop-filter: blur(6px);
     -webkit-backdrop-filter: blur(6px);
     border-bottom: 1px solid var(--rule);
   }
 
-  /* Editor recebe o padding-x que o main perdeu */
+  /* Editor recebe o padding-x que o main perdeu — incluindo safe-area
+     pra não colar em entalhe lateral quando deitado. */
   .editor {
-    padding: 0 var(--space-lg);
+    padding: 0 max(var(--space-lg), env(safe-area-inset-right)) 0
+      max(var(--space-lg), env(safe-area-inset-left));
     margin-top: var(--space-xs);
   }
 
@@ -2604,6 +2638,20 @@ body {
   }
 }
 
+/* Tablet portrait + drawer aberto: editor ganha respiração horizontal.
+   Em 768-860px (iPad portrait, tablet 8") o padding-x de 20px é apertado
+   pro título mono de 28px + corpo. Subir pra 32px dá ar sem desperdiçar. */
+@media (min-width: 641px) and (max-width: 860px) {
+  .main-head {
+    padding-left: max(var(--space-xl), env(safe-area-inset-left));
+    padding-right: max(var(--space-xl), env(safe-area-inset-right));
+  }
+  .editor {
+    padding-left: max(var(--space-xl), env(safe-area-inset-left));
+    padding-right: max(var(--space-xl), env(safe-area-inset-right));
+  }
+}
+
 /* --------------------------------------------------------------------------
    Container queries — sidebar (interno adapta ao próprio width)
    --------------------------------------------------------------------------
@@ -2642,10 +2690,11 @@ body {
   }
 }
 
-/* Sidebar ainda mais estreito (≤290px) — desktop tablet OU drawer em phone
-   pequeno (320-330px viewport). Session-row quebra em duas linhas pro email
-   ocupar uma e as ações outra: trunca menos, lê melhor no toque. */
-@container sidebar (max-width: 290px) {
+/* Sidebar estreito (≤310px) — cobre desktop tablet (sidebar 280px no
+   breakpoint ≤1024) e drawer em phones pequenos. Session-row quebra em duas
+   linhas pro email ocupar uma e as ações outra: trunca menos, lê melhor no
+   toque. Antes era 290 e o tablet desktop não disparava — email truncava. */
+@container sidebar (max-width: 310px) {
   .session-row {
     flex-wrap: wrap;
     row-gap: var(--space-2xs);
@@ -2738,11 +2787,12 @@ body {
     gap: var(--space-md);
   }
 
-  /* Toast centralizado no rodapé em mobile (em vez de canto direito) */
+  /* Toast centralizado no rodapé em mobile (em vez de canto direito) —
+     bottom respeita home indicator iOS, left/right respeitam notch lateral. */
   .toast-region {
-    right: var(--space-md);
-    left: var(--space-md);
-    bottom: var(--space-md);
+    right: max(var(--space-md), env(safe-area-inset-right));
+    left: max(var(--space-md), env(safe-area-inset-left));
+    bottom: max(var(--space-md), env(safe-area-inset-bottom));
     align-items: stretch;
   }
 
@@ -3060,7 +3110,11 @@ body {
 .settings {
   max-width: 820px;
   margin: 0 auto;
-  padding: var(--space-xl) var(--space-lg) var(--space-2xl);
+  /* padding-x respeita notch lateral em landscape iOS — sem isso, conteúdo
+     da settings encosta no Dynamic Island deitado. */
+  padding: var(--space-xl) max(var(--space-lg), env(safe-area-inset-right))
+    max(var(--space-2xl), env(safe-area-inset-bottom))
+    max(var(--space-lg), env(safe-area-inset-left));
   display: flex;
   flex-direction: column;
   gap: var(--space-xl);
@@ -3353,7 +3407,9 @@ body {
 
 @media (max-width: 720px) {
   .settings {
-    padding: var(--space-lg) var(--space-md) var(--space-2xl);
+    padding: var(--space-lg) max(var(--space-md), env(safe-area-inset-right))
+      max(var(--space-2xl), env(safe-area-inset-bottom))
+      max(var(--space-md), env(safe-area-inset-left));
     gap: var(--space-lg);
   }
 
@@ -3410,9 +3466,9 @@ body {
   }
 
   .settings-toast-region {
-    left: var(--space-md);
-    right: var(--space-md);
-    bottom: var(--space-md);
+    left: max(var(--space-md), env(safe-area-inset-left));
+    right: max(var(--space-md), env(safe-area-inset-right));
+    bottom: max(var(--space-md), env(safe-area-inset-bottom));
     transform: none;
     text-align: center;
   }
@@ -3420,7 +3476,9 @@ body {
 
 @media (max-width: 480px) {
   .settings {
-    padding: var(--space-md) var(--space-sm) var(--space-xl);
+    padding: var(--space-md) max(var(--space-sm), env(safe-area-inset-right))
+      max(var(--space-xl), env(safe-area-inset-bottom))
+      max(var(--space-sm), env(safe-area-inset-left));
   }
 
   .settings-section {
@@ -3703,6 +3761,7 @@ body {
   align-items: center;
   justify-content: space-between;
   gap: var(--space-md);
+  flex-wrap: wrap;
 }
 
 .improve-overlay-title {
@@ -3721,6 +3780,7 @@ body {
 
 .improve-overlay-providers {
   display: inline-flex;
+  flex-wrap: wrap;
   gap: 4px;
   margin-left: var(--space-xs);
   vertical-align: baseline;
@@ -4037,9 +4097,9 @@ body {
 
 @media (max-width: 720px) {
   .legacy-banner {
-    top: var(--space-sm);
-    left: var(--space-sm);
-    right: var(--space-sm);
+    top: max(var(--space-sm), env(safe-area-inset-top));
+    left: max(var(--space-sm), env(safe-area-inset-left));
+    right: max(var(--space-sm), env(safe-area-inset-right));
     transform: none;
     max-width: none;
     flex-wrap: wrap;
@@ -4085,6 +4145,49 @@ body {
   /* Drawer ocupa tudo na largura quando orientação muda */
   .sidebar {
     width: min(70vw, 360px);
+  }
+
+  /* Improve overlay deitado num iPhone (altura ~375): com 2 panes
+     empilhados em mobile-first o conteúdo fica esmagado. Aqui forçamos
+     2 colunas (lado a lado, original|melhorado) e enxugamos paddings —
+     a dimensão limitante vira a altura, não a largura. */
+  .improve-overlay {
+    padding: var(--space-xs);
+  }
+
+  .improve-overlay-card {
+    padding: var(--space-sm) var(--space-md);
+    gap: var(--space-sm);
+    max-height: calc(var(--app-h) - var(--space-sm));
+  }
+
+  .improve-overlay-body {
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-sm);
+    min-height: 0;
+  }
+
+  .improve-overlay-pre {
+    min-height: 80px;
+    max-height: 40dvh;
+  }
+
+  .improve-overlay-instruction {
+    grid-template-columns: auto 1fr auto;
+    gap: var(--space-sm);
+  }
+
+  .improve-overlay-label {
+    white-space: nowrap;
+  }
+
+  .improve-overlay-run {
+    width: auto;
+  }
+
+  /* Cmd menu fica gigante em landscape baixo — limita altura */
+  .cmd-menu {
+    max-height: 60vh;
   }
 }
 

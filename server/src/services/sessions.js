@@ -38,7 +38,13 @@ export async function findSessionByToken(token) {
     include: { user: true },
   });
   if (!row) return null;
-  if (row.expiresAt.getTime() < Date.now()) {
+  const now = Date.now();
+  if (row.expiresAt.getTime() < now) {
+    await prisma.session.delete({ where: { id: row.id } }).catch(() => {});
+    return null;
+  }
+  const idleMs = env.SESSION_IDLE_TIMEOUT_MIN * 60 * 1000;
+  if (idleMs > 0 && now - row.lastUsedAt.getTime() > idleMs) {
     await prisma.session.delete({ where: { id: row.id } }).catch(() => {});
     return null;
   }
