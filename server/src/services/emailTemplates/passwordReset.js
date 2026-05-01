@@ -177,21 +177,21 @@ function buildHtml({
             </td>
           </tr>
 
-          <!-- CTA bulletproof -->
+          <!-- CTA bulletproof — width 100% pra dominar a hierarquia -->
           <tr>
-            <td class="pad-x" align="left" style="padding:4px 36px 28px 36px;">
+            <td class="pad-x" align="center" style="padding:4px 36px 28px 36px;">
               <!--[if mso]>
-              <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="${resetUrl}" style="height:48px;v-text-anchor:middle;width:240px;" arcsize="12%" stroke="f" fillcolor="${ACCENT}">
+              <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="${resetUrl}" style="height:56px;v-text-anchor:middle;width:488px;" arcsize="11%" stroke="f" fillcolor="${ACCENT}">
                 <w:anchorlock/>
-                <center style="color:${ACCENT_ON};font-family:Consolas,monospace;font-size:15px;font-weight:700;letter-spacing:0.01em;">redefinir senha</center>
+                <center style="color:${ACCENT_ON};font-family:Consolas,monospace;font-size:16px;font-weight:700;letter-spacing:0.02em;">redefinir senha</center>
               </v:roundrect>
               <![endif]-->
               <!--[if !mso]><!-- -->
-              <table role="presentation" class="cta-btn" cellpadding="0" cellspacing="0" border="0" style="border-collapse:separate;">
+              <table role="presentation" class="cta-btn" width="100%" cellpadding="0" cellspacing="0" border="0" style="width:100%;border-collapse:separate;">
                 <tr>
                   <td align="center" bgcolor="${ACCENT}" style="background:${ACCENT};border-radius:6px;">
                     <a href="${resetUrl}"
-                      style="display:inline-block;padding:15px 32px;font-family:${MONO};font-size:15px;font-weight:700;line-height:1;letter-spacing:0.01em;color:${ACCENT_ON};text-decoration:none;border-radius:6px;">
+                      style="display:block;padding:18px 24px;font-family:${MONO};font-size:16px;font-weight:700;line-height:1;letter-spacing:0.02em;color:${ACCENT_ON};text-decoration:none;border-radius:6px;text-align:center;">
                       redefinir senha
                     </a>
                   </td>
