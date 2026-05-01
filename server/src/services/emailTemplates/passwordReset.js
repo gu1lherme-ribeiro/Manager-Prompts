@@ -81,14 +81,15 @@ function buildHtml({
 }) {
   // Paleta hex — mesma intenção do tema dark do app, porém fixa (email).
   const BG = "#0f100c";
-  const CARD = "#17181a";
-  const RULE = "#292a23";
-  const INK_1 = "#e9e4d6";
-  const INK_2 = "#b8b2a1";
-  const INK_3 = "#7a7466";
-  const INK_4 = "#55503f";
+  const CARD = "#161611";
+  const RULE = "#26261e";
+  const INK_1 = "#ece6d3";
+  const INK_2 = "#a8a290";
+  const INK_3 = "#6e6856";
+  const INK_4 = "#48432f";
   const ACCENT = "#d6a35c";
-  const ACCENT_ON = "#14140d";
+  const ACCENT_HOVER = "#e0b06a";
+  const ACCENT_ON = "#1a1605";
 
   const MONO = `SFMono-Regular, Consolas, "Liberation Mono", Menlo, "Courier New", monospace`;
 
@@ -109,13 +110,14 @@ function buildHtml({
     table,td { mso-table-lspace:0pt; mso-table-rspace:0pt; }
     img { -ms-interpolation-mode:bicubic; border:0; outline:none; text-decoration:none; }
     body { margin:0 !important; padding:0 !important; width:100% !important; background:${BG}; }
-    a { color:${ACCENT}; text-decoration:none; }
-    .mono { font-family:${MONO}; }
+    a { text-decoration:none; }
     @media (max-width:600px) {
       .wrap { width:100% !important; }
-      .pad { padding-left:24px !important; padding-right:24px !important; }
-      .cta { display:block !important; width:100% !important; box-sizing:border-box; text-align:center !important; }
-      .meta-row td { padding-bottom:10px !important; }
+      .pad-x { padding-left:24px !important; padding-right:24px !important; }
+      .cta-cell { padding-left:24px !important; padding-right:24px !important; }
+      .cta-btn { width:100% !important; }
+      .cta-btn td { padding-left:0 !important; padding-right:0 !important; }
+      .meta-line { font-size:11px !important; }
     }
   </style>
 </head>
@@ -124,124 +126,121 @@ function buildHtml({
 
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="${BG}" style="background:${BG};">
     <tr>
-      <td align="center" style="padding:40px 16px;">
-        <table role="presentation" class="wrap" width="560" cellpadding="0" cellspacing="0" border="0" style="width:560px;max-width:560px;background:${CARD};border:1px solid ${RULE};border-radius:4px;">
+      <td align="center" style="padding:48px 16px;">
 
-          <!-- Cabeçalho: wordmark + status ............................ -->
+        <!-- ════════════════════════════════════════════════════════════
+             Card principal
+             ════════════════════════════════════════════════════════════ -->
+        <table role="presentation" class="wrap" width="560" cellpadding="0" cellspacing="0" border="0" style="width:560px;max-width:560px;background:${CARD};border:1px solid ${RULE};border-radius:6px;">
+
+          <!-- Header bar — densidade compacta, rule abaixo -->
           <tr>
-            <td class="pad" style="padding:28px 36px 20px 36px;">
+            <td class="pad-x" style="padding:18px 36px;border-bottom:1px solid ${RULE};">
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
                 <tr>
-                  <td align="left" style="font-family:${MONO};font-size:15px;font-weight:600;color:${INK_1};letter-spacing:-0.01em;">
+                  <td align="left" style="font-family:${MONO};font-size:13px;font-weight:600;color:${INK_1};letter-spacing:-0.01em;line-height:1;">
                     manager<span style="color:${ACCENT};">-</span>prompts
                   </td>
-                  <td align="right" style="font-family:${MONO};font-size:11px;color:${INK_3};letter-spacing:0.04em;">
-                    v2.0 · reset
+                  <td align="right" style="font-family:${MONO};font-size:10px;color:${INK_3};letter-spacing:0.08em;text-transform:lowercase;line-height:1;">
+                    reset · v2
                   </td>
                 </tr>
               </table>
             </td>
           </tr>
 
-          <!-- Rule -->
-          <tr><td style="padding:0 36px;"><div style="border-top:1px solid ${RULE};line-height:0;font-size:0;">&nbsp;</div></td></tr>
-
-          <!-- Saudação + chamada ................................... -->
+          <!-- Hero block — eyebrow tight, heading grande, body 1 frase -->
           <tr>
-            <td class="pad" style="padding:28px 36px 4px 36px;">
-              <p style="margin:0 0 6px 0;font-family:${MONO};font-size:12px;color:${INK_3};letter-spacing:0.04em;">
-                <span style="color:${INK_4};">[</span>auth<span style="color:${INK_4};">]</span> &nbsp;fluxo de reset
+            <td class="pad-x" style="padding:40px 36px 32px 36px;">
+              <p style="margin:0 0 10px 0;font-family:${MONO};font-size:11px;color:${INK_3};letter-spacing:0.08em;line-height:1;">
+                <span style="color:${INK_4};">$</span> auth.reset
               </p>
-              <h1 style="margin:0 0 12px 0;font-family:${MONO};font-size:22px;line-height:1.2;font-weight:600;color:${INK_1};letter-spacing:-0.01em;">
-                ${greeting}.
+              <h1 style="margin:0 0 16px 0;font-family:${MONO};font-size:26px;line-height:1.15;font-weight:600;color:${INK_1};letter-spacing:-0.02em;">
+                redefinir senha
               </h1>
               <p style="margin:0;font-family:${MONO};font-size:14px;line-height:1.6;color:${INK_2};">
-                alguém pediu pra redefinir a senha da conta
-                <span style="color:${INK_1};">${to}</span>.
-                o link abaixo é <strong style="color:${INK_1};font-weight:600;">válido por ${ttlMinutes} minutos</strong>
-                e só pode ser usado <strong style="color:${INK_1};font-weight:600;">uma vez</strong>.
+                ${greeting} — você pediu um reset pra <span style="color:${INK_1};">${to}</span>. clique no botão abaixo pra escolher uma senha nova.
               </p>
             </td>
           </tr>
 
-          <!-- CTA .................................................... -->
+          <!-- CTA bulletproof — table-based, ocupa atenção visual ............... -->
           <tr>
-            <td class="pad" style="padding:24px 36px 12px 36px;">
+            <td class="cta-cell" align="left" style="padding:0 36px 16px 36px;">
               <!--[if mso]>
-              <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="${resetUrl}" style="height:44px;v-text-anchor:middle;width:260px;" arcsize="7%" stroke="f" fillcolor="${ACCENT}">
+              <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="${resetUrl}" style="height:48px;v-text-anchor:middle;width:280px;" arcsize="8%" stroke="f" fillcolor="${ACCENT}">
                 <w:anchorlock/>
-                <center style="color:${ACCENT_ON};font-family:Consolas,monospace;font-size:14px;font-weight:600;letter-spacing:0.02em;">❯ definir nova senha</center>
+                <center style="color:${ACCENT_ON};font-family:Consolas,monospace;font-size:14px;font-weight:700;letter-spacing:0.02em;">❯ definir nova senha</center>
               </v:roundrect>
               <![endif]-->
               <!--[if !mso]><!-- -->
-              <a class="cta mono" href="${resetUrl}"
-                style="display:inline-block;background:${ACCENT};color:${ACCENT_ON};font-family:${MONO};font-size:14px;font-weight:600;line-height:1;letter-spacing:0.02em;padding:14px 26px;border-radius:3px;text-decoration:none;">
-                <span style="color:${ACCENT_ON};">❯&nbsp;</span>definir nova senha
-              </a>
+              <table role="presentation" class="cta-btn" cellpadding="0" cellspacing="0" border="0" style="border-collapse:separate;">
+                <tr>
+                  <td align="center" bgcolor="${ACCENT}" style="background:${ACCENT};border-radius:4px;">
+                    <a href="${resetUrl}"
+                      style="display:inline-block;padding:14px 28px;font-family:${MONO};font-size:14px;font-weight:700;line-height:1;letter-spacing:0.02em;color:${ACCENT_ON};text-decoration:none;border-radius:4px;">
+                      <span style="color:${ACCENT_ON};">❯</span>&nbsp;definir nova senha
+                    </a>
+                  </td>
+                </tr>
+              </table>
               <!--<![endif]-->
             </td>
           </tr>
 
-          <!-- Link fallback em texto ............................... -->
+          <!-- Meta line — 1 linha, separadores · — vocabulário dev .......... -->
           <tr>
-            <td class="pad" style="padding:8px 36px 24px 36px;">
-              <p style="margin:0 0 6px 0;font-family:${MONO};font-size:11px;color:${INK_4};letter-spacing:0.02em;">
-                ou cole isto no navegador:
-              </p>
-              <p style="margin:0;font-family:${MONO};font-size:11px;line-height:1.5;color:${INK_3};word-break:break-all;">
-                <a href="${resetUrl}" style="color:${ACCENT};text-decoration:none;word-break:break-all;">${resetUrlDisplay}</a>
+            <td class="pad-x" style="padding:0 36px 32px 36px;">
+              <p class="meta-line" style="margin:0;font-family:${MONO};font-size:12px;color:${INK_3};letter-spacing:0.02em;line-height:1.5;">
+                expira em <span style="color:${INK_2};">${ttlMinutes} min</span>
+                &nbsp;<span style="color:${INK_4};">·</span>&nbsp; uso <span style="color:${INK_2};">único</span>
+                &nbsp;<span style="color:${INK_4};">·</span>&nbsp; sessões serão encerradas
               </p>
             </td>
           </tr>
 
           <!-- Rule -->
-          <tr><td style="padding:0 36px;"><div style="border-top:1px solid ${RULE};line-height:0;font-size:0;">&nbsp;</div></td></tr>
-
-          <!-- Meta grid ............................................ -->
           <tr>
-            <td class="pad" style="padding:20px 36px 4px 36px;">
-              <table role="presentation" class="meta-row" width="100%" cellpadding="0" cellspacing="0" border="0" style="font-family:${MONO};font-size:11px;color:${INK_3};letter-spacing:0.02em;line-height:1.5;">
-                <tr>
-                  <td valign="top" width="30%" style="padding:0 12px 6px 0;">
-                    <span style="color:${INK_4};">expira</span><br />
-                    <span style="color:${INK_2};">${ttlMinutes} min</span>
-                  </td>
-                  <td valign="top" width="30%" style="padding:0 12px 6px 0;">
-                    <span style="color:${INK_4};">uso</span><br />
-                    <span style="color:${INK_2};">único</span>
-                  </td>
-                  <td valign="top" width="40%" style="padding:0 0 6px 0;">
-                    <span style="color:${INK_4};">sessões</span><br />
-                    <span style="color:${INK_2};">todas serão encerradas</span>
-                  </td>
-                </tr>
-              </table>
+            <td style="padding:0 36px;">
+              <div style="border-top:1px solid ${RULE};line-height:0;font-size:0;">&nbsp;</div>
             </td>
           </tr>
 
-          <!-- Ignore note .......................................... -->
+          <!-- Fallback link — recessivo, INK_3 (não compete com CTA) -->
           <tr>
-            <td class="pad" style="padding:16px 36px 28px 36px;">
+            <td class="pad-x" style="padding:24px 36px 8px 36px;">
+              <p style="margin:0 0 8px 0;font-family:${MONO};font-size:11px;color:${INK_4};letter-spacing:0.04em;line-height:1.4;">
+                ou copie no navegador:
+              </p>
+              <p style="margin:0;font-family:${MONO};font-size:11px;line-height:1.55;color:${INK_3};word-break:break-all;">
+                <a href="${resetUrl}" style="color:${INK_3};text-decoration:underline;text-decoration-color:${INK_4};word-break:break-all;">${resetUrlDisplay}</a>
+              </p>
+            </td>
+          </tr>
+
+          <!-- Ignore note — comentário dev-style -->
+          <tr>
+            <td class="pad-x" style="padding:20px 36px 28px 36px;">
               <p style="margin:0;font-family:${MONO};font-size:12px;line-height:1.55;color:${INK_3};">
-                <span style="color:${INK_4};">//</span>
-                se não foi você, ignore este email — nada muda até alguém abrir o link.
+                <span style="color:${INK_4};">//</span> se não foi você, ignore. nada muda até alguém abrir o link.
               </p>
             </td>
           </tr>
 
         </table>
 
-        <!-- Footer fora do card ................................... -->
+        <!-- ════════════════════════════════════════════════════════════
+             Footer (fora do card, mais discreto)
+             ════════════════════════════════════════════════════════════ -->
         <table role="presentation" class="wrap" width="560" cellpadding="0" cellspacing="0" border="0" style="width:560px;max-width:560px;">
           <tr>
-            <td class="pad" align="center" style="padding:16px 36px 0 36px;font-family:${MONO};font-size:10px;color:${INK_4};letter-spacing:0.04em;line-height:1.6;">
-              manager-prompts
-              ${baseUrl ? `&nbsp;·&nbsp; <a href="${baseUrl}" style="color:${INK_3};text-decoration:none;">${baseUrlDisplay}</a>` : ""}
+            <td class="pad-x" align="center" style="padding:24px 36px 0 36px;font-family:${MONO};font-size:10px;color:${INK_4};letter-spacing:0.06em;line-height:1.7;">
+              manager-prompts${baseUrl ? `&nbsp;<span style="color:${INK_4};">·</span>&nbsp;<a href="${baseUrl}" style="color:${INK_3};text-decoration:none;">${baseUrlDisplay}</a>` : ""}
             </td>
           </tr>
           <tr>
-            <td class="pad" align="center" style="padding:4px 36px 0 36px;font-family:${MONO};font-size:10px;color:${INK_4};letter-spacing:0.04em;line-height:1.6;">
-              você está recebendo porque alguém pediu um reset usando ${to}.
+            <td class="pad-x" align="center" style="padding:6px 36px 0 36px;font-family:${MONO};font-size:10px;color:${INK_4};letter-spacing:0.04em;line-height:1.6;">
+              destinatário: ${to}
             </td>
           </tr>
         </table>
