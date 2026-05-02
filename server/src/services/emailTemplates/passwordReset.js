@@ -9,7 +9,7 @@
 //   - CSS crítico inline, media query apenas pra colapso mobile
 //
 // Identidade: dev-tool dark, acento âmbar disciplinado, vocabulário de log
-// ("token", "single-use"). Mantido coerente com a UI de /reset.
+// ("token", "single-use", "ttl"). Mantido coerente com a UI de /reset.
 
 const ESC_MAP = {
   "&": "&amp;",
@@ -36,6 +36,19 @@ function capitalizeFirst(s) {
   return t.charAt(0).toUpperCase() + t.slice(1).toLowerCase();
 }
 
+// Extrai os primeiros chars do token pra mostrar como "request id" no email.
+// Defensivo: qualquer falha retorna null e a feature simplesmente não aparece.
+function extractTokenPreview(resetUrl) {
+  try {
+    const url = new URL(resetUrl);
+    const token = url.searchParams.get("token");
+    if (!token || token.length < 10) return null;
+    return token.slice(0, 7);
+  } catch {
+    return null;
+  }
+}
+
 /**
  * @param {object} args
  * @param {string} args.to           — email do destinatário (para preheader/footer)
@@ -57,6 +70,7 @@ export function renderPasswordResetEmail({
   const greeting = name ? `oi, ${name.toLowerCase()}` : "oi";
   const preheader = `Link válido por ${ttlMinutes} minutos. Se não foi você, pode ignorar com segurança.`;
   const subject = "redefinir senha · manager-prompts";
+  const tokenPreview = extractTokenPreview(resetUrl);
 
   const html = buildHtml({
     nameDisplay: escapeHtml(nameDisplay),
@@ -67,9 +81,10 @@ export function renderPasswordResetEmail({
     preheader: escapeHtml(preheader),
     baseUrl: baseUrl || "",
     baseUrlDisplay: escapeHtml(baseUrl || ""),
+    tokenPreview: tokenPreview ? escapeHtml(tokenPreview) : null,
   });
 
-  const text = buildText({ greeting, resetUrl, ttlMinutes, baseUrl });
+  const text = buildText({ greeting, resetUrl, ttlMinutes, baseUrl, tokenPreview });
 
   return { subject, html, text, preheader };
 }
@@ -85,24 +100,30 @@ function buildHtml({
   preheader,
   baseUrl,
   baseUrlDisplay,
+  tokenPreview,
 }) {
   // Paleta DARK MODE — calibrada pelo template fornecido.
-  // Typography híbrida: mono no chrome (wordmark, eyebrow, heading, URL),
-  // sans no body (parágrafos longos, security box, footer) — mais legível.
+  // Typography híbrida: mono no chrome (wordmark, eyebrow, heading, security
+  // box, URL), sans no body (parágrafos longos, footer) — mais legível.
   const BG = "#0a0a07";
   const CARD = "#141410";
-  const SECURITY_BG = "#0f0f0c";  // levemente mais escuro que CARD pra "afundar"
+  const SUNKEN_BG = "#0d0d09";  // levemente mais escuro que CARD pra "afundar"
   const RULE = "#2a2820";
+  const RULE_SOFT = "#1f1d17";  // divisor sutil para tabela interna
   const INK_1 = "#f5efde";   // 16:1 — heading, valores chave
   const INK_2 = "#cdc7b3";   // 11:1 — body principal
   const INK_3 = "#8e8876";   // 5.5:1 — meta, footer
   const INK_4 = "#5c5746";   // 2.6:1 — ornamentos (//, ·, [])
-  const INK_DIM = "#a8a290"; // intermediário para security box body
+  const INK_DIM = "#a8a290"; // intermediário
   const ACCENT = "#e6b066";
+  const ACCENT_SHADOW = "#b8843d";  // borda inferior do CTA, dá profundidade
   const ACCENT_ON = "#1a1605";
 
-  const MONO = `'SF Mono', SFMono-Regular, Consolas, Menlo, "Liberation Mono", "Courier New", monospace`;
-  const SANS = `-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif`;
+  // Webfonts: Apple Mail, iOS Mail, Gmail (web/Android) e Outlook.com renderizam.
+  // Outlook desktop (Windows) ignora <link>/@font-face silenciosamente e cai
+  // nos fallbacks da stack — comportamento esperado, não bug.
+  const MONO = `'Red Hat Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace`;
+  const SANS = `'Hanken Grotesk', system-ui, -apple-system, 'Segoe UI', sans-serif`;
 
   const preheaderStyle =
     "display:none;overflow:hidden;line-height:1px;opacity:0;max-height:0;max-width:0;mso-hide:all;";
@@ -111,6 +132,18 @@ function buildHtml({
   const greetingLine = nameDisplay
     ? `Oi, <strong style="color:${INK_1};font-weight:600;">${nameDisplay}</strong> &mdash; recebemos um pedido para redefinir a senha da conta vinculada a <strong style="color:${INK_1};font-weight:600;word-break:break-word;">${to}</strong>. Toque no botão abaixo para escolher uma senha nova.`
     : `Recebemos um pedido para redefinir a senha da conta vinculada a <strong style="color:${INK_1};font-weight:600;word-break:break-word;">${to}</strong>. Toque no botão abaixo para escolher uma senha nova.`;
+
+  // Linha de "request id" só renderiza se conseguimos extrair preview do token.
+  const tokenLine = tokenPreview
+    ? `<tr>
+                        <td style="padding:8px 0 0 0;font-family:${MONO};font-size:12px;line-height:1.5;color:${INK_4};border-top:1px solid ${RULE_SOFT};white-space:nowrap;">
+                          <span style="color:${INK_4};">req</span>
+                        </td>
+                        <td style="padding:8px 0 0 0;font-family:${MONO};font-size:12px;line-height:1.5;color:${INK_3};border-top:1px solid ${RULE_SOFT};">
+                          ${tokenPreview}<span style="color:${INK_4};">…</span>
+                        </td>
+                      </tr>`
+    : "";
 
   return `<!DOCTYPE html>
 <html lang="pt-BR">
@@ -121,7 +154,13 @@ function buildHtml({
   <meta name="color-scheme" content="light dark" />
   <meta name="supported-color-schemes" content="light dark" />
   <title>redefinir senha · manager-prompts</title>
+  <!--[if !mso]><!-->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700&family=Red+Hat+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <!--<![endif]-->
   <style>
+    @import url('https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700&family=Red+Hat+Mono:wght@400;500;600;700&display=swap');
     body,table,td,a { -webkit-text-size-adjust:100%; -ms-text-size-adjust:100%; }
     table,td { mso-table-lspace:0pt; mso-table-rspace:0pt; }
     img { -ms-interpolation-mode:bicubic; border:0; outline:none; text-decoration:none; display:block; }
@@ -133,7 +172,8 @@ function buildHtml({
       .pad-x { padding-left:22px !important; padding-right:22px !important; }
       .h1-mobile { font-size:24px !important; line-height:1.2 !important; }
       .cta-btn { width:100% !important; }
-      .cta-btn a { display:block !important; box-sizing:border-box !important; }
+      .cta-btn a { display:block !important; box-sizing:border-box !important; padding-left:24px !important; padding-right:24px !important; }
+      .meta-key { width:64px !important; }
     }
   </style>
 </head>
@@ -149,19 +189,19 @@ function buildHtml({
              ════════════════════════════════════════════════════════════ -->
         <table role="presentation" class="wrap" width="560" cellpadding="0" cellspacing="0" border="0" bgcolor="${CARD}" style="width:560px;max-width:560px;background:${CARD};border:1px solid ${RULE};border-radius:8px;">
 
-          <!-- Header — wordmark limpo, sem versionamento -->
+          <!-- Header — wordmark com indicador âmbar à esquerda -->
           <tr>
             <td class="pad-x" style="padding:22px 36px;border-bottom:1px solid ${RULE};font-family:${MONO};font-size:14px;font-weight:700;color:${INK_1};line-height:1;">
-              manager<span style="color:${ACCENT};">-</span>prompts
+              <span style="display:inline-block;width:3px;height:14px;background:${ACCENT};vertical-align:-2px;margin-right:10px;"></span>manager<span style="color:${ACCENT};">-</span>prompts
             </td>
           </tr>
 
           <!-- Hero -->
           <tr>
-            <td class="pad-x" style="padding:40px 36px 24px 36px;">
+            <td class="pad-x" style="padding:44px 36px 24px 36px;">
 
               <!-- Eyebrow — terminal vibe -->
-              <p style="margin:0 0 14px 0;font-family:${MONO};font-size:12px;font-weight:600;color:${INK_3};line-height:1;letter-spacing:0.04em;">
+              <p style="margin:0 0 16px 0;font-family:${MONO};font-size:12px;font-weight:600;color:${INK_3};line-height:1;letter-spacing:0.04em;">
                 <span style="color:${ACCENT};">$</span> auth.reset
               </p>
 
@@ -177,22 +217,23 @@ function buildHtml({
             </td>
           </tr>
 
-          <!-- CTA bulletproof — width auto, centralizado, cantos sharp (3px alinhado ao app) -->
+          <!-- CTA bulletproof — maior, com seta, com border-bottom dando profundidade
+               sem depender de box-shadow (muitos clients descartam shadows). -->
           <tr>
-            <td class="pad-x" align="center" style="padding:4px 36px 28px 36px;">
+            <td class="pad-x" align="center" style="padding:8px 36px 32px 36px;">
               <!--[if mso]>
-              <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="${resetUrl}" style="height:50px;v-text-anchor:middle;width:260px;" arcsize="6%" stroke="f" fillcolor="${ACCENT}">
+              <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="${resetUrl}" style="height:54px;v-text-anchor:middle;width:300px;" arcsize="6%" stroke="f" fillcolor="${ACCENT}">
                 <w:anchorlock/>
-                <center style="color:${ACCENT_ON};font-family:Consolas,monospace;font-size:15px;font-weight:700;letter-spacing:0.02em;">redefinir senha</center>
+                <center style="color:${ACCENT_ON};font-family:Consolas,monospace;font-size:15px;font-weight:700;letter-spacing:0.02em;">redefinir senha &rarr;</center>
               </v:roundrect>
               <![endif]-->
               <!--[if !mso]><!-- -->
               <table role="presentation" class="cta-btn" cellpadding="0" cellspacing="0" border="0" align="center" style="border-collapse:separate;margin:0 auto;">
                 <tr>
-                  <td align="center" bgcolor="${ACCENT}" style="background:${ACCENT};border-radius:3px;">
+                  <td align="center" bgcolor="${ACCENT}" style="background:${ACCENT};border-radius:3px;border-bottom:2px solid ${ACCENT_SHADOW};">
                     <a href="${resetUrl}"
-                      style="display:inline-block;padding:16px 40px;font-family:${MONO};font-size:15px;font-weight:700;line-height:1;letter-spacing:0.02em;color:${ACCENT_ON};text-decoration:none;border-radius:3px;text-align:center;">
-                      redefinir senha
+                      style="display:inline-block;padding:18px 56px;font-family:${MONO};font-size:15px;font-weight:700;line-height:1;letter-spacing:0.02em;color:${ACCENT_ON};text-decoration:none;border-radius:3px;text-align:center;">
+                      redefinir senha&nbsp;&rarr;
                     </a>
                   </td>
                 </tr>
@@ -201,30 +242,62 @@ function buildHtml({
             </td>
           </tr>
 
-          <!-- Caixa de segurança — info crítica com peso visual próprio -->
+          <!-- Caixa de segurança — reformulada como tabela key-value estilo log.
+               Identidade dev-tool reforçada: keys em mono+âmbar, values em mono+ink_1.
+               Inclui token preview ("req: S8Q62Au…") quando disponível, dando
+               sensação de autenticidade real (vs. phishing genérico). -->
           <tr>
             <td class="pad-x" style="padding:0 36px 28px 36px;">
-              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="${SECURITY_BG}" style="background:${SECURITY_BG};border:1px solid ${RULE};border-radius:6px;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="${SUNKEN_BG}" style="background:${SUNKEN_BG};border:1px solid ${RULE};border-radius:6px;">
                 <tr>
-                  <td style="padding:18px 22px;font-family:${SANS};font-size:13px;line-height:1.85;color:${INK_DIM};">
-                    <span style="color:${ACCENT};font-weight:700;">❯</span>&nbsp; válido por <strong style="color:${INK_1};font-weight:600;">${ttlMinutes} minutos</strong><br />
-                    <span style="color:${ACCENT};font-weight:700;">❯</span>&nbsp; pode ser usado <strong style="color:${INK_1};font-weight:600;">uma única vez</strong><br />
-                    <span style="color:${ACCENT};font-weight:700;">❯</span>&nbsp; todas as sessões ativas serão encerradas após a troca
+                  <td style="padding:18px 22px;">
+                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                      <tr>
+                        <td class="meta-key" style="width:80px;padding:0 0 6px 0;font-family:${MONO};font-size:13px;line-height:1.5;color:${ACCENT};vertical-align:top;white-space:nowrap;">
+                          ttl
+                        </td>
+                        <td style="padding:0 0 6px 0;font-family:${MONO};font-size:13px;line-height:1.5;color:${INK_1};vertical-align:top;">
+                          ${ttlMinutes} minutos
+                        </td>
+                      </tr>
+                      <tr>
+                        <td class="meta-key" style="width:80px;padding:6px 0;font-family:${MONO};font-size:13px;line-height:1.5;color:${ACCENT};vertical-align:top;white-space:nowrap;border-top:1px solid ${RULE_SOFT};">
+                          uses
+                        </td>
+                        <td style="padding:6px 0;font-family:${MONO};font-size:13px;line-height:1.5;color:${INK_1};vertical-align:top;border-top:1px solid ${RULE_SOFT};">
+                          single-use
+                        </td>
+                      </tr>
+                      <tr>
+                        <td class="meta-key" style="width:80px;padding:6px 0 ${tokenPreview ? "6px" : "0"} 0;font-family:${MONO};font-size:13px;line-height:1.5;color:${ACCENT};vertical-align:top;white-space:nowrap;border-top:1px solid ${RULE_SOFT};">
+                          scope
+                        </td>
+                        <td style="padding:6px 0 ${tokenPreview ? "6px" : "0"} 0;font-family:${MONO};font-size:13px;line-height:1.5;color:${INK_1};vertical-align:top;border-top:1px solid ${RULE_SOFT};">
+                          encerra todas as sessões ativas
+                        </td>
+                      </tr>
+                      ${tokenLine}
+                    </table>
                   </td>
                 </tr>
               </table>
             </td>
           </tr>
 
-          <!-- Fallback link -->
+          <!-- Fallback link — agora em "code block" com background próprio
+               em vez de texto solto sublinhado. -->
           <tr>
             <td class="pad-x" style="padding:0 36px 8px 36px;">
-              <p style="margin:0 0 8px 0;font-family:${SANS};font-size:12px;font-weight:500;color:${INK_3};line-height:1.5;">
+              <p style="margin:0 0 10px 0;font-family:${SANS};font-size:12px;font-weight:500;color:${INK_3};line-height:1.5;">
                 <span style="color:${INK_4};">//</span> botão não funciona? cole no navegador:
               </p>
-              <p style="margin:0;font-family:${MONO};font-size:12px;line-height:1.5;color:${INK_2};word-break:break-all;">
-                <a href="${resetUrl}" style="color:${INK_2};text-decoration:underline;text-decoration-color:${INK_4};text-underline-offset:2px;word-break:break-all;">${resetUrlDisplay}</a>
-              </p>
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="${SUNKEN_BG}" style="background:${SUNKEN_BG};border:1px solid ${RULE_SOFT};border-radius:4px;">
+                <tr>
+                  <td style="padding:12px 14px;font-family:${MONO};font-size:12px;line-height:1.55;color:${INK_2};word-break:break-all;">
+                    <a href="${resetUrl}" style="color:${INK_2};text-decoration:none;word-break:break-all;">${resetUrlDisplay}</a>
+                  </td>
+                </tr>
+              </table>
             </td>
           </tr>
 
@@ -251,7 +324,7 @@ function buildHtml({
              ════════════════════════════════════════════════════════════ -->
         <table role="presentation" class="wrap" width="560" cellpadding="0" cellspacing="0" border="0" style="width:560px;max-width:560px;">
           <tr>
-            <td class="pad-x" align="center" style="padding:24px 36px 8px 36px;font-family:${SANS};font-size:11px;font-weight:500;color:${INK_3};line-height:1.7;">
+            <td class="pad-x" align="center" style="padding:24px 36px 6px 36px;font-family:${MONO};font-size:11px;font-weight:600;color:${INK_3};line-height:1.7;letter-spacing:0.02em;">
               ${baseUrl ? `<a href="${baseUrl}" style="color:${INK_DIM};text-decoration:none;">${baseUrlDisplay}</a>` : `manager-prompts.site`}
             </td>
           </tr>
@@ -269,7 +342,7 @@ function buildHtml({
 </html>`;
 }
 
-function buildText({ greeting, resetUrl, ttlMinutes, baseUrl }) {
+function buildText({ greeting, resetUrl, ttlMinutes, baseUrl, tokenPreview }) {
   const lines = [
     `${greeting}.`,
     "",
@@ -279,14 +352,22 @@ function buildText({ greeting, resetUrl, ttlMinutes, baseUrl }) {
     "definir nova senha:",
     resetUrl,
     "",
-    `— expira em ${ttlMinutes} min`,
-    "— uso único",
-    "— todas as sessões ativas serão encerradas após a troca",
+    `ttl     ${ttlMinutes} minutos`,
+    "uses    single-use",
+    "scope   encerra todas as sessões ativas",
+  ];
+
+  if (tokenPreview) {
+    lines.push(`req     ${tokenPreview}…`);
+  }
+
+  lines.push(
     "",
     "se não foi você, ignore este email — nada muda até alguém abrir o link.",
     "",
     "--",
     `manager-prompts${baseUrl ? `  ·  ${baseUrl}` : ""}`,
-  ];
+  );
+
   return lines.join("\n");
 }
