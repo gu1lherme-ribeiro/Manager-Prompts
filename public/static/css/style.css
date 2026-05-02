@@ -1701,9 +1701,15 @@ body {
    ========================================================================== */
 
 .auth-body {
+  /* Sobrescreve o lock global do body (height + overflow:hidden travam o shell
+     pra só o .main rolar). Em página de auth não há sidebar pra travar — então
+     o body precisa crescer com o conteúdo e rolar quando o form não cabe
+     (mobile estreito, viewport curto, teclado virtual). */
   min-height: var(--app-h);
+  height: auto;
   background: var(--bg);
   overflow-x: hidden;
+  overflow-y: auto;
 }
 
 .auth {
@@ -1832,7 +1838,10 @@ body {
 /* Main — form --------------------------------------------------------- */
 .auth-main {
   display: flex;
-  align-items: center;
+  /* `safe center`: centraliza quando cabe, top-aligna quando o form estoura
+     o auth-main (mobile estreito). Sem `safe`, o overflow vai pra cima do
+     auth-main numa zona que o scroll do body não alcança — clipa as tabs. */
+  align-items: safe center;
   justify-content: center;
   padding: clamp(var(--space-xl), 4vw, var(--space-3xl))
     clamp(var(--space-xl), 6vw, var(--space-3xl));
@@ -2358,7 +2367,15 @@ body {
 @media (max-width: 900px) {
   .auth {
     grid-template-columns: 1fr;
-    grid-template-rows: auto 1fr;
+    /* `auto auto` (não `auto 1fr`): a track 2 cresce com o conteúdo do
+       form-wrap em vez de travar no espaço viewport-restante. Sem isso, o
+       form-wrap (status + tabs + heading + 4 fields + checkbox + submit + sep
+       + google ≈ 700px) estoura uma track de 500px e o overflow não conta na
+       altura do .auth — body não detecta, body não rola, tabs ficam ocultas.
+       `align-content: start` evita stretch das tracks pra preencher 100dvh —
+       sobra de espaço fica no fundo do .auth (bg), não esticando o aside. */
+    grid-template-rows: auto auto;
+    align-content: start;
   }
 
   .auth-aside {
@@ -2385,6 +2402,11 @@ body {
   }
 
   .auth-main {
+    /* Top-align em mobile: garante que tabs (topo do form-wrap) fiquem
+       sempre visíveis logo abaixo do aside. O `safe center` da regra base
+       resolveria o clipping vertical pra cima, mas com a grid `auto auto`
+       o auth-main já cresce com o conteúdo — não precisa centralizar. */
+    align-items: flex-start;
     padding: var(--space-xl) var(--space-xl) var(--space-3xl);
   }
 }
