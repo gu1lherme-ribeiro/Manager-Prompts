@@ -2402,12 +2402,16 @@ body {
   }
 
   .auth-main {
-    /* Top-align em mobile: garante que tabs (topo do form-wrap) fiquem
-       sempre visíveis logo abaixo do aside. O `safe center` da regra base
-       resolveria o clipping vertical pra cima, mas com a grid `auto auto`
-       o auth-main já cresce com o conteúdo — não precisa centralizar. */
-    align-items: flex-start;
+    /* Mobile: troca flex centralizado por block layout puro. Sem flex/grid
+       magic — o form-wrap fica top-aligned naturalmente, sem depender de
+       `safe center` ou comportamento de track auto/1fr que varia entre
+       engines. Centralização horizontal vem do `margin: 0 auto` no form-wrap. */
+    display: block;
     padding: var(--space-xl) var(--space-xl) var(--space-3xl);
+  }
+
+  .auth-form-wrap {
+    margin: 0 auto;
   }
 }
 
