@@ -24,7 +24,7 @@ import { createChallenge, isMfaRequired, MfaChallengeError, MFA_TTL_MIN, MFA_MAX
 import { renderMfaChallengeEmail } from "../services/emailTemplates/mfaChallenge.js";
 import { requireUser } from "../middleware/auth.js";
 import { authLimiter } from "../middleware/rateLimit.js";
-import { hasKeysMap } from "../services/apiKeys.js";
+import { meResponse } from "../services/users.js";
 
 const router = Router();
 
@@ -44,21 +44,6 @@ const registerSchema = credentialsSchema.extend({
   firstName: personName,
   lastName: personName,
 });
-
-async function meResponse(user) {
-  const hasKeys = await hasKeysMap(user.id);
-  return {
-    id: user.id,
-    email: user.email,
-    firstName: user.firstName,
-    lastName: user.lastName,
-    displayName: user.displayName,
-    defaultProvider: user.defaultProvider,
-    hasGoogle: !!user.googleSub,
-    hasPassword: !!user.passwordHash,
-    hasKeys,
-  };
-}
 
 function sessionConfig() {
   return {

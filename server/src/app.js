@@ -12,6 +12,7 @@ import promptsRouter from "./routes/prompts.js";
 import projectsRouter from "./routes/projects.js";
 import settingsRouter from "./routes/settings.js";
 import improveRouter from "./routes/improve.js";
+import mfaRouter from "./routes/mfa.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const PUBLIC_DIR = resolve(__dirname, "../../public");
@@ -71,6 +72,7 @@ export function createApp() {
 
   app.use("/api/auth", authRouter);
   app.use("/api/auth", oauthRouter);
+  app.use("/api/auth/mfa", mfaRouter);
   app.use("/api/prompts", promptsRouter);
   app.use("/api/prompts", improveRouter); // monta /api/prompts/:id/improve
   app.use("/api/projects", projectsRouter);

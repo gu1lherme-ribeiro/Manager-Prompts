@@ -24,6 +24,8 @@ const EXEMPT_PATHS = new Set([
   "/api/auth/register",
   "/api/auth/google",
   "/api/auth/google/callback",
+  "/api/auth/mfa/verify",
+  "/api/auth/mfa/resend",
 ]);
 
 function safeEqual(a, b) {
