@@ -2,6 +2,7 @@
 import crypto from "node:crypto";
 import prisma from "../db/prisma.js";
 import { env } from "../config/env.js";
+import { verifyTrustedDevice, TRUSTED_DEVICE_COOKIE } from "./trustedDevices.js";
 
 const TTL_MS = 5 * 60 * 1000;
 const MAX_ATTEMPTS = 5;
@@ -128,4 +129,24 @@ export async function checkResendCooldown(userId) {
     const wait = Math.ceil((RESEND_COOLDOWN_MS - elapsed) / 1000);
     throw new MfaChallengeError("mfa_resend_cooldown", `aguarde ${wait}s`);
   }
+}
+
+/**
+ * Decide se o login atual exige MFA. Não tem efeito colateral.
+ *
+ * - Usuários só-OAuth (sem passwordHash) não passam por aqui via login com
+ *   senha; defensivo retornar false caso cheguem.
+ * - Sem registro em MfaSettings, ou enabled=false, MFA está desligado.
+ * - Cookie mp_td válido (verifyTrustedDevice) dispensa o desafio.
+ */
+export async function isMfaRequired({ user, req }) {
+  if (!user.passwordHash) return false;
+
+  const settings = await prisma.mfaSettings.findUnique({ where: { userId: user.id } });
+  if (!settings?.enabled) return false;
+
+  const tdToken = req.cookies?.[TRUSTED_DEVICE_COOKIE];
+  if (tdToken && (await verifyTrustedDevice(tdToken, user.id))) return false;
+
+  return true;
 }

@@ -20,6 +20,8 @@ import {
 } from "../services/passwordResets.js";
 import { sendMail } from "../services/mailer.js";
 import { renderPasswordResetEmail } from "../services/emailTemplates/passwordReset.js";
+import { createChallenge, isMfaRequired, MfaChallengeError, MFA_TTL_MIN, MFA_MAX_ATTEMPTS } from "../services/mfaChallenges.js";
+import { renderMfaChallengeEmail } from "../services/emailTemplates/mfaChallenge.js";
 import { requireUser } from "../middleware/auth.js";
 import { authLimiter } from "../middleware/rateLimit.js";
 import { hasKeysMap } from "../services/apiKeys.js";
@@ -117,9 +119,44 @@ router.post("/login", authLimiter, async (req, res, next) => {
         error: { code: "invalid_credentials", message: "credenciais inválidas" },
       });
     }
+
+    if (await isMfaRequired({ user, req })) {
+      const { challengeId, code } = await createChallenge({
+        userId: user.id,
+        ip: req.ip,
+        userAgent: req.get("user-agent"),
+      });
+      const mail = renderMfaChallengeEmail({
+        to: user.email,
+        code,
+        ttlMinutes: MFA_TTL_MIN,
+        firstName: user.firstName,
+        baseUrl: env.BASE_URL,
+        challengePreview: challengeId.slice(0, 7),
+      });
+      sendMail({
+        to: user.email,
+        subject: mail.subject,
+        html: mail.html,
+        text: mail.text,
+      }).catch((err) => console.error("[mfa] sendMail crashed:", err));
+
+      return res.status(202).json({
+        needsMfa: true,
+        challengeId,
+        ttlSeconds: MFA_TTL_MIN * 60,
+        attemptsLeft: MFA_MAX_ATTEMPTS,
+      });
+    }
+
     await issueAuth(res, { user, keep, req });
     res.json({ user: await meResponse(user) });
   } catch (err) {
+    if (err instanceof MfaChallengeError && err.code === "mfa_not_configured") {
+      return res.status(503).json({
+        error: { code: "mfa_not_configured", message: "MFA não disponível no momento" },
+      });
+    }
     if (err?.issues) {
       return res.status(400).json({
         error: { code: "invalid_input", message: err.issues[0]?.message || "entrada inválida" },
