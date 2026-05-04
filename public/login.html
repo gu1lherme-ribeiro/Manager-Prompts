@@ -10,7 +10,7 @@
     <meta name="theme-color" content="oklch(22% 0.012 250)" media="(prefers-color-scheme: dark)" />
     <meta name="theme-color" content="oklch(94% 0.008 250)" media="(prefers-color-scheme: light)" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg?v=3" sizes="any" />
-    <link rel="stylesheet" href="/static/css/style.css?v=20260502a" />
+    <link rel="stylesheet" href="/static/css/style.css?v=20260504b" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -221,6 +221,67 @@
             <span class="auth-google-glyph" aria-hidden="true">G</span>
             <span>Entrar Com Google</span>
           </a>
+
+          <div
+            class="auth-mfa-panel"
+            id="auth-mfa-panel"
+            data-shown="false"
+            aria-hidden="true"
+            inert
+          >
+            <p class="main-status auth-status">
+              <span class="main-status-prefix" aria-hidden="true">$</span>
+              <span class="main-status-text">auth.mfa: aguardando código</span>
+            </p>
+
+            <div class="auth-heading">
+              <h2 class="auth-title">Verifique Seu E-mail</h2>
+              <p class="auth-subtitle" id="auth-mfa-subtitle">
+                Enviamos um código de 6 dígitos pro seu email. Cole abaixo.
+              </p>
+            </div>
+
+            <form class="auth-form" id="auth-mfa-form" autocomplete="on" novalidate>
+              <div class="auth-field">
+                <label class="auth-label" for="mfa-code">Código</label>
+                <div class="auth-input-wrap">
+                  <span class="auth-input-prefix" aria-hidden="true">→</span>
+                  <input
+                    type="text"
+                    id="mfa-code"
+                    name="code"
+                    class="auth-input auth-mfa-code"
+                    inputmode="numeric"
+                    pattern="\d{6}"
+                    maxlength="6"
+                    autocomplete="one-time-code"
+                    spellcheck="false"
+                  />
+                </div>
+              </div>
+
+              <label class="auth-check">
+                <input type="checkbox" class="auth-check-input" id="mfa-trust-device" />
+                <span class="auth-check-label">Confiar Neste Dispositivo (30 Dias)</span>
+              </label>
+
+              <p class="auth-error" id="auth-mfa-error" role="alert" aria-live="polite" hidden></p>
+
+              <button type="submit" class="btn-primary auth-submit" id="auth-mfa-submit">
+                Verificar
+              </button>
+            </form>
+
+            <div class="auth-mfa-actions">
+              <button type="button" class="auth-link-inline" id="auth-mfa-resend" disabled>
+                Reenviar código (00:60)
+              </button>
+              <span class="auth-mfa-actions-sep" aria-hidden="true">·</span>
+              <button type="button" class="auth-link-inline" id="auth-mfa-back">
+                Voltar
+              </button>
+            </div>
+          </div>
         </div>
       </section>
     </main>

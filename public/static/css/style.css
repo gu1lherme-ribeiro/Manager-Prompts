@@ -4354,3 +4354,142 @@ body {
     content: "";
   }
 }
+
+/* --------------------------------------------------------------------------
+   Auth — painel MFA (verificação por email no /login)
+   -------------------------------------------------------------------------- */
+
+.auth-mfa-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+  animation: page-in var(--dur-slow) var(--ease-out-expo) both;
+}
+
+.auth-mfa-panel[data-shown="false"] {
+  display: none;
+}
+
+.auth-mfa-code {
+  /* Mono + letter-spacing alta pra ler 6 dígitos sem confusão.
+     text-align center pra paste do email cair centralizado. */
+  font-family: var(--font-mono);
+  font-size: 1.25rem;
+  letter-spacing: 0.4em;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.auth-mfa-actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-xs);
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  color: var(--ink-3);
+}
+
+.auth-mfa-actions-sep {
+  color: var(--ink-4);
+  opacity: 0.5;
+}
+
+.auth-mfa-actions .auth-link-inline[disabled] {
+  pointer-events: none;
+  opacity: 0.5;
+}
+
+/* MFA settings card -------------------------------------------------------- */
+.settings-mfa .status-pill {
+  font-family: var(--font-mono);
+  font-size: var(--fs-2xs);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  padding: 4px 8px;
+  border-radius: 2px;
+  border: 1px solid var(--rule);
+  color: var(--ink-3);
+  background: transparent;
+  vertical-align: middle;
+  margin-left: var(--space-sm);
+}
+
+.settings-mfa .status-pill[data-on="true"] {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+.settings-mfa-step {
+  margin-top: var(--space-md);
+  padding-top: var(--space-md);
+  border-top: 1px solid var(--rule);
+}
+
+.settings-mfa-step[data-shown="false"] {
+  display: none;
+}
+
+.settings-mfa-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.settings-mfa-form-actions {
+  display: flex;
+  gap: var(--space-sm);
+  margin-top: var(--space-xs);
+}
+
+.settings-mfa-devices {
+  margin-top: var(--space-lg);
+  padding-top: var(--space-md);
+  border-top: 1px solid var(--rule);
+}
+
+.settings-mfa-devices[data-shown="false"] {
+  display: none;
+}
+
+.settings-mfa-devices-head {
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  color: var(--ink-2);
+  margin: 0 0 var(--space-sm) 0;
+  letter-spacing: 0.02em;
+}
+
+.settings-mfa-devices-list {
+  list-style: none;
+  margin: 0 0 var(--space-md) 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.trusted-device-item {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: var(--space-sm);
+  align-items: center;
+  padding: var(--space-sm) 0;
+  border-top: 1px solid var(--rule);
+}
+
+.trusted-device-item:first-child {
+  border-top: 0;
+}
+
+.trusted-device-meta {
+  font-family: var(--font-mono);
+  font-size: var(--fs-2xs);
+  color: var(--ink-3);
+  line-height: 1.5;
+}
+
+.trusted-device-ua {
+  color: var(--ink-2);
+}

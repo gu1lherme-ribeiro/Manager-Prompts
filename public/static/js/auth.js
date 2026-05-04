@@ -16,6 +16,19 @@ const nameRow = document.getElementById("auth-name-row");
 const firstName = document.getElementById("first-name");
 const lastName = document.getElementById("last-name");
 
+const mfaPanel = document.getElementById("auth-mfa-panel");
+const mfaForm = document.getElementById("auth-mfa-form");
+const mfaCode = document.getElementById("mfa-code");
+const mfaTrustDevice = document.getElementById("mfa-trust-device");
+const mfaSubtitle = document.getElementById("auth-mfa-subtitle");
+const mfaError = document.getElementById("auth-mfa-error");
+const mfaSubmit = document.getElementById("auth-mfa-submit");
+const mfaResend = document.getElementById("auth-mfa-resend");
+const mfaBack = document.getElementById("auth-mfa-back");
+
+let mfaState = null; // { challengeId, ttlSeconds, keep }
+let resendTimer = null;
+
 const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
 
 let mode = "login";
@@ -153,6 +166,80 @@ reveal.addEventListener("click", () => {
   password.type = nextPressed ? "text" : "password";
 });
 
+function showMfaPanel({ challengeId, ttlSeconds, keep, email }) {
+  mfaState = { challengeId, ttlSeconds, keep };
+  mfaSubtitle.textContent = `Enviamos um código de 6 dígitos pro seu email${
+    email ? ` (${email})` : ""
+  }. Cole abaixo.`;
+  mfaCode.value = "";
+  mfaError.hidden = true;
+  mfaError.textContent = "";
+
+  // Esconde tabs + form de login + sep + Google
+  document.querySelectorAll(".auth-tabs, .auth-heading, .auth-sep, .auth-google")
+    .forEach((el) => { el.style.display = "none"; el.setAttribute("inert", ""); });
+  form.setAttribute("inert", "");
+  form.style.display = "none";
+
+  mfaPanel.dataset.shown = "true";
+  mfaPanel.removeAttribute("inert");
+  mfaPanel.removeAttribute("aria-hidden");
+  setTimeout(() => mfaCode.focus(), 50);
+
+  startResendCooldown(60);
+}
+
+function hideMfaPanel() {
+  mfaState = null;
+  mfaPanel.dataset.shown = "false";
+  mfaPanel.setAttribute("inert", "");
+  mfaPanel.setAttribute("aria-hidden", "true");
+
+  document.querySelectorAll(".auth-tabs, .auth-heading, .auth-sep, .auth-google")
+    .forEach((el) => { el.style.display = ""; el.removeAttribute("inert"); });
+  form.removeAttribute("inert");
+  form.style.display = "";
+
+  if (resendTimer) {
+    clearInterval(resendTimer);
+    resendTimer = null;
+  }
+}
+
+function startResendCooldown(seconds) {
+  let left = seconds;
+  mfaResend.disabled = true;
+  mfaResend.textContent = `Reenviar código (${formatCountdown(left)})`;
+  if (resendTimer) clearInterval(resendTimer);
+  resendTimer = setInterval(() => {
+    left -= 1;
+    if (left <= 0) {
+      clearInterval(resendTimer);
+      resendTimer = null;
+      mfaResend.disabled = false;
+      mfaResend.textContent = "Reenviar código";
+      return;
+    }
+    mfaResend.textContent = `Reenviar código (${formatCountdown(left)})`;
+  }, 1000);
+}
+
+function formatCountdown(s) {
+  const m = Math.floor(s / 60);
+  const sec = s % 60;
+  return `${String(m).padStart(2, "0")}:${String(sec).padStart(2, "0")}`;
+}
+
+function showMfaError(msg) {
+  mfaError.textContent = msg;
+  mfaError.hidden = false;
+}
+
+function clearMfaError() {
+  mfaError.textContent = "";
+  mfaError.hidden = true;
+}
+
 function redirectAfterAuth() {
   const params = new URLSearchParams(window.location.search);
   let next = params.get("next") || "/";
@@ -202,7 +289,18 @@ async function submitAuth() {
       body.lastName = last;
       await endpoints.register(body);
     } else {
-      await endpoints.login(body);
+      const result = await endpoints.login(body);
+      if (result && result.needsMfa) {
+        showMfaPanel({
+          challengeId: result.challengeId,
+          ttlSeconds: result.ttlSeconds,
+          keep: keep.checked,
+          email: emailCheck.value,
+        });
+        submit.disabled = false;
+        submit.textContent = originalLabel;
+        return;
+      }
     }
     redirectAfterAuth();
   } catch (err) {
@@ -263,3 +361,65 @@ const REASON_MESSAGES = {
 })();
 
 email.focus();
+
+mfaForm.addEventListener("submit", async (ev) => {
+  ev.preventDefault();
+  if (!mfaState) return;
+  clearMfaError();
+  const code = (mfaCode.value || "").replace(/\D/g, "");
+  if (!/^\d{6}$/.test(code)) {
+    showMfaError("Digite os 6 dígitos do código.");
+    return;
+  }
+  mfaSubmit.disabled = true;
+  const orig = mfaSubmit.textContent;
+  mfaSubmit.textContent = "Verificando…";
+  try {
+    await endpoints.mfaVerify({
+      challengeId: mfaState.challengeId,
+      code,
+      trustDevice: mfaTrustDevice.checked,
+      keep: mfaState.keep,
+    });
+    redirectAfterAuth();
+  } catch (err) {
+    if (err instanceof ApiError) {
+      const msgs = {
+        mfa_invalid: "Código inválido. Tente de novo.",
+        mfa_expired: "Código expirado. Peça um novo.",
+        mfa_used: "Código já foi usado. Peça um novo.",
+        mfa_too_many_attempts: "Tentativas esgotadas. Peça um novo código.",
+      };
+      showMfaError(msgs[err.code] || err.message || "Falha na verificação.");
+    } else {
+      showMfaError("Falha inesperada — tente novamente.");
+      console.error(err);
+    }
+    mfaSubmit.disabled = false;
+    mfaSubmit.textContent = orig;
+    mfaCode.select();
+  }
+});
+
+mfaResend.addEventListener("click", async () => {
+  if (mfaResend.disabled || !mfaState) return;
+  clearMfaError();
+  try {
+    const r = await endpoints.mfaResend({ challengeId: mfaState.challengeId });
+    mfaState.challengeId = r.challengeId;
+    startResendCooldown(r.cooldownSeconds || 60);
+  } catch (err) {
+    if (err instanceof ApiError && err.code === "mfa_resend_cooldown") {
+      showMfaError("Aguarde antes de pedir outro código.");
+    } else {
+      showMfaError(err.message || "Falha ao reenviar.");
+    }
+  }
+});
+
+mfaBack.addEventListener("click", () => {
+  hideMfaPanel();
+  email.focus();
+});
+
+mfaCode.addEventListener("input", clearMfaError);

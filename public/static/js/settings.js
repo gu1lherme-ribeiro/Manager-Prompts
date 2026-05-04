@@ -276,3 +276,195 @@ async function init() {
 }
 
 init();
+
+/* =========================================================================
+   MFA card — Verificação Em Dois Passos
+   ========================================================================= */
+const _$mfa = (id) => document.getElementById(id);
+
+const _mfaCard = _$mfa("card-mfa");
+if (_mfaCard) (function setupMfaCard() {
+  const pill        = _$mfa("mfa-status-pill");
+  const toggleBtn   = _$mfa("mfa-toggle-btn");
+  const step1       = _$mfa("mfa-enable-step1");
+  const step1Form   = _$mfa("mfa-enable-step1-form");
+  const step1Pwd    = _$mfa("mfa-enable-pwd");
+  const step1Err    = _$mfa("mfa-enable-step1-error");
+  const step2       = _$mfa("mfa-enable-step2");
+  const step2Form   = _$mfa("mfa-enable-step2-form");
+  const step2Code   = _$mfa("mfa-enable-code");
+  const step2Err    = _$mfa("mfa-enable-step2-error");
+  const disableStep = _$mfa("mfa-disable-step");
+  const disableForm = _$mfa("mfa-disable-form");
+  const disablePwd  = _$mfa("mfa-disable-pwd");
+  const disableErr  = _$mfa("mfa-disable-error");
+  const devices     = _$mfa("mfa-devices");
+  const devicesList = _$mfa("mfa-devices-list");
+  const revokeAll   = _$mfa("mfa-revoke-all");
+
+  let mfaState = { enabled: false, challengeId: null };
+
+  function setStep(id) {
+    [step1, step2, disableStep].forEach((el) => {
+      const on = el.id === id;
+      el.dataset.shown = on ? "true" : "false";
+      if (on) el.removeAttribute("inert"); else el.setAttribute("inert", "");
+    });
+  }
+
+  function renderMfaState({ enabled, trustedDevices }) {
+    mfaState.enabled = enabled;
+    pill.dataset.on = String(enabled);
+    pill.textContent = enabled ? "on" : "off";
+    toggleBtn.textContent = enabled ? "Desativar" : "Ativar";
+    devices.dataset.shown = enabled ? "true" : "false";
+    devices.hidden = !enabled;
+    if (enabled) renderDevices(trustedDevices || []);
+  }
+
+  function renderDevices(list) {
+    devicesList.innerHTML = "";
+    if (!list.length) {
+      const li = document.createElement("li");
+      li.className = "trusted-device-item";
+      li.innerHTML = `<div class="trusted-device-meta">// nenhum dispositivo confiável ainda</div>`;
+      devicesList.appendChild(li);
+      return;
+    }
+    for (const d of list) {
+      const li = document.createElement("li");
+      li.className = "trusted-device-item";
+      const ua   = (d.userAgent || "navegador desconhecido").slice(0, 60);
+      const ip   = d.ip || "—";
+      const last = _mfaRelative(new Date(d.lastUsedAt));
+      li.innerHTML = `
+        <div class="trusted-device-meta">
+          <div class="trusted-device-ua">${_mfaEsc(ua)}</div>
+          <div>ip ${_mfaEsc(ip)} · usado ${_mfaEsc(last)}</div>
+        </div>
+        <button type="button" class="btn-ghost" data-revoke="${_mfaEsc(d.id)}">revogar</button>
+      `;
+      devicesList.appendChild(li);
+    }
+  }
+
+  function _mfaEsc(s) {
+    return String(s).replace(/[&<>"']/g, (c) => (
+      { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]
+    ));
+  }
+
+  function _mfaRelative(d) {
+    const ms  = Date.now() - d.getTime();
+    const min = Math.floor(ms / 60000);
+    if (min < 1)  return "agora";
+    if (min < 60) return `há ${min}min`;
+    const h   = Math.floor(min / 60);
+    if (h < 24)   return `há ${h}h`;
+    const days = Math.floor(h / 24);
+    return `há ${days}d`;
+  }
+
+  async function loadMfa() {
+    try {
+      const r = await endpoints.getMfa();
+      renderMfaState(r);
+    } catch (err) {
+      console.error("[mfa] load failed", err);
+    }
+  }
+
+  toggleBtn.addEventListener("click", () => {
+    if (mfaState.enabled) {
+      setStep("mfa-disable-step");
+      disablePwd.focus();
+    } else {
+      setStep("mfa-enable-step1");
+      step1Pwd.focus();
+    }
+  });
+
+  _mfaCard.querySelectorAll("[data-mfa-cancel]").forEach((b) => {
+    b.addEventListener("click", () => {
+      setStep(null);
+      step1Pwd.value = "";
+      step2Code.value = "";
+      disablePwd.value = "";
+      step1Err.hidden = true;
+      step2Err.hidden = true;
+      disableErr.hidden = true;
+    });
+  });
+
+  step1Form.addEventListener("submit", async (ev) => {
+    ev.preventDefault();
+    step1Err.hidden = true;
+    try {
+      const r = await endpoints.enableMfaStep1({ password: step1Pwd.value });
+      mfaState.challengeId = r.challengeId;
+      step1Pwd.value = "";
+      setStep("mfa-enable-step2");
+      step2Code.focus();
+    } catch (err) {
+      step1Err.textContent = err instanceof ApiError ? err.message : "Falha.";
+      step1Err.hidden = false;
+    }
+  });
+
+  step2Form.addEventListener("submit", async (ev) => {
+    ev.preventDefault();
+    step2Err.hidden = true;
+    const code = step2Code.value.replace(/\D/g, "");
+    if (!/^\d{6}$/.test(code)) {
+      step2Err.textContent = "Digite os 6 dígitos.";
+      step2Err.hidden = false;
+      return;
+    }
+    try {
+      await endpoints.enableMfaStep2({ challengeId: mfaState.challengeId, code });
+      step2Code.value = "";
+      setStep(null);
+      await loadMfa();
+    } catch (err) {
+      step2Err.textContent = err instanceof ApiError ? err.message : "Falha.";
+      step2Err.hidden = false;
+    }
+  });
+
+  disableForm.addEventListener("submit", async (ev) => {
+    ev.preventDefault();
+    disableErr.hidden = true;
+    try {
+      await endpoints.disableMfa({ password: disablePwd.value });
+      disablePwd.value = "";
+      setStep(null);
+      await loadMfa();
+    } catch (err) {
+      disableErr.textContent = err instanceof ApiError ? err.message : "Falha.";
+      disableErr.hidden = false;
+    }
+  });
+
+  devicesList.addEventListener("click", async (ev) => {
+    const btn = ev.target.closest("[data-revoke]");
+    if (!btn) return;
+    const id = btn.dataset.revoke;
+    try {
+      await endpoints.revokeTrustedDevice(id);
+      await loadMfa();
+    } catch (err) {
+      console.error("[mfa] revoke failed", err);
+    }
+  });
+
+  revokeAll.addEventListener("click", async () => {
+    try {
+      await endpoints.revokeAllTrustedDevices();
+      await loadMfa();
+    } catch (err) {
+      console.error("[mfa] revokeAll failed", err);
+    }
+  });
+
+  loadMfa();
+})();

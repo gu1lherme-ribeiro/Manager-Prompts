@@ -10,7 +10,7 @@
     <meta name="theme-color" content="oklch(18% 0.011 250)" media="(prefers-color-scheme: dark)" />
     <meta name="theme-color" content="oklch(97% 0.005 250)" media="(prefers-color-scheme: light)" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg?v=3" sizes="any" />
-    <link rel="stylesheet" href="/static/css/style.css?v=20260502a" />
+    <link rel="stylesheet" href="/static/css/style.css?v=20260504b" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -88,6 +88,78 @@
           A chave é guardada criptografada (aes-256-gcm) e nunca retorna pro navegador depois de salva.
         </p>
         <ul class="keys-list" id="keys-list" aria-label="Chaves por provider"></ul>
+      </section>
+
+      <section class="settings-section settings-mfa" id="card-mfa" aria-labelledby="sec-mfa">
+        <h2 id="sec-mfa" class="settings-section-title">
+          <span class="settings-section-prefix" aria-hidden="true">//</span>
+          Verificação Em Dois Passos
+          <span class="status-pill" id="mfa-status-pill" data-on="false">off</span>
+        </h2>
+
+        <p class="settings-hint" id="mfa-desc">
+          Adiciona um código por email a cada login em dispositivo novo.
+          Você fica confiando neste dispositivo por 30 dias após a primeira verificação.
+        </p>
+
+        <div class="settings-actions" style="justify-content:flex-start;border-top:none;padding-top:0;">
+          <button type="button" class="btn-primary" id="mfa-toggle-btn">Ativar</button>
+        </div>
+
+        <div class="settings-mfa-step" id="mfa-enable-step1" data-shown="false" inert>
+          <p class="settings-hint">Confirme sua senha pra continuar.</p>
+          <form class="settings-mfa-form" id="mfa-enable-step1-form">
+            <div class="auth-field">
+              <label class="auth-label" for="mfa-enable-pwd">Senha</label>
+              <input type="password" id="mfa-enable-pwd" class="auth-input" autocomplete="current-password" required />
+            </div>
+            <p class="auth-error" id="mfa-enable-step1-error" hidden></p>
+            <div class="settings-mfa-form-actions">
+              <button type="submit" class="btn-primary">Enviar Código</button>
+              <button type="button" class="btn-ghost" data-mfa-cancel>Cancelar</button>
+            </div>
+          </form>
+        </div>
+
+        <div class="settings-mfa-step" id="mfa-enable-step2" data-shown="false" inert>
+          <p class="settings-hint">Digite o código que enviamos pro seu email.</p>
+          <form class="settings-mfa-form" id="mfa-enable-step2-form">
+            <div class="auth-field">
+              <label class="auth-label" for="mfa-enable-code">Código</label>
+              <input type="text" id="mfa-enable-code" class="auth-input auth-mfa-code"
+                     inputmode="numeric" pattern="\d{6}" maxlength="6"
+                     autocomplete="one-time-code" required />
+            </div>
+            <p class="auth-error" id="mfa-enable-step2-error" hidden></p>
+            <div class="settings-mfa-form-actions">
+              <button type="submit" class="btn-primary">Confirmar</button>
+              <button type="button" class="btn-ghost" data-mfa-cancel>Cancelar</button>
+            </div>
+          </form>
+        </div>
+
+        <div class="settings-mfa-step" id="mfa-disable-step" data-shown="false" inert>
+          <p class="settings-hint">
+            <strong>Atenção:</strong> desativar revoga todos os dispositivos confiáveis.
+          </p>
+          <form class="settings-mfa-form" id="mfa-disable-form">
+            <div class="auth-field">
+              <label class="auth-label" for="mfa-disable-pwd">Senha</label>
+              <input type="password" id="mfa-disable-pwd" class="auth-input" autocomplete="current-password" required />
+            </div>
+            <p class="auth-error" id="mfa-disable-error" hidden></p>
+            <div class="settings-mfa-form-actions">
+              <button type="submit" class="btn-primary">Desativar MFA</button>
+              <button type="button" class="btn-ghost" data-mfa-cancel>Cancelar</button>
+            </div>
+          </form>
+        </div>
+
+        <div class="settings-mfa-devices" id="mfa-devices" data-shown="false" hidden>
+          <h4 class="settings-mfa-devices-head">Dispositivos Confiáveis</h4>
+          <ul class="settings-mfa-devices-list" id="mfa-devices-list" aria-live="polite"></ul>
+          <button type="button" class="btn-ghost" id="mfa-revoke-all">Revogar Todos</button>
+        </div>
       </section>
 
       <p class="settings-toast-region" id="settings-toast" role="status" aria-live="polite" hidden></p>

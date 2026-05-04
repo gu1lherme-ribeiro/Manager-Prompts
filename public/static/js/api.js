@@ -100,4 +100,17 @@ export const endpoints = {
 
   improvePrompt: (id, body) =>
     api.post(`/api/prompts/${encodeURIComponent(id)}/improve`, body || {}),
+
+  // MFA — fluxo de login
+  mfaVerify: (body) => api.post("/api/auth/mfa/verify", body),
+  mfaResend: (body) => api.post("/api/auth/mfa/resend", body),
+
+  // MFA — settings
+  getMfa: () => api.get("/api/settings/mfa"),
+  enableMfaStep1: (body) => api.post("/api/settings/mfa/enable", body),
+  enableMfaStep2: (body) => api.post("/api/settings/mfa/enable", body),
+  disableMfa: (body) => api.post("/api/settings/mfa/disable", body),
+  revokeTrustedDevice: (id) =>
+    api.delete(`/api/settings/mfa/trusted-devices/${encodeURIComponent(id)}`),
+  revokeAllTrustedDevices: () => api.delete("/api/settings/mfa/trusted-devices"),
 };
