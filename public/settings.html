@@ -111,7 +111,10 @@
           <form class="settings-mfa-form" id="mfa-enable-step1-form">
             <div class="auth-field">
               <label class="auth-label" for="mfa-enable-pwd">Senha</label>
-              <input type="password" id="mfa-enable-pwd" class="auth-input" autocomplete="current-password" required />
+              <div class="auth-input-wrap">
+                <span class="auth-input-prefix" aria-hidden="true">→</span>
+                <input type="password" id="mfa-enable-pwd" class="auth-input" autocomplete="current-password" required />
+              </div>
             </div>
             <p class="auth-error" id="mfa-enable-step1-error" hidden></p>
             <div class="settings-mfa-form-actions">
@@ -126,9 +129,12 @@
           <form class="settings-mfa-form" id="mfa-enable-step2-form">
             <div class="auth-field">
               <label class="auth-label" for="mfa-enable-code">Código</label>
-              <input type="text" id="mfa-enable-code" class="auth-input auth-mfa-code"
-                     inputmode="numeric" pattern="\d{6}" maxlength="6"
-                     autocomplete="one-time-code" required />
+              <div class="auth-input-wrap">
+                <span class="auth-input-prefix" aria-hidden="true">→</span>
+                <input type="text" id="mfa-enable-code" class="auth-input auth-mfa-code"
+                       inputmode="numeric" pattern="\d{6}" maxlength="6"
+                       autocomplete="one-time-code" required />
+              </div>
             </div>
             <p class="auth-error" id="mfa-enable-step2-error" hidden></p>
             <div class="settings-mfa-form-actions">
@@ -145,7 +151,10 @@
           <form class="settings-mfa-form" id="mfa-disable-form">
             <div class="auth-field">
               <label class="auth-label" for="mfa-disable-pwd">Senha</label>
-              <input type="password" id="mfa-disable-pwd" class="auth-input" autocomplete="current-password" required />
+              <div class="auth-input-wrap">
+                <span class="auth-input-prefix" aria-hidden="true">→</span>
+                <input type="password" id="mfa-disable-pwd" class="auth-input" autocomplete="current-password" required />
+              </div>
             </div>
             <p class="auth-error" id="mfa-disable-error" hidden></p>
             <div class="settings-mfa-form-actions">
