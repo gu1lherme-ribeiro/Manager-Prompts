@@ -62,6 +62,7 @@ const DATABASE_URL = optional("DATABASE_URL", "");
 
 const sessionSecret = base64Bytes("SESSION_SECRET", 32);
 const encryptionKey = base64Bytes("ENCRYPTION_KEY", 32);
+const mfaHmacKey = base64Bytes("MFA_HMAC_KEY", 32);
 
 const cookieSecure = (optional("COOKIE_SECURE", "false") || "false").toLowerCase() === "true";
 
@@ -70,6 +71,7 @@ if (isProd) {
   if (!sessionSecret) throw new Error("em prod SESSION_SECRET é obrigatório");
   if (!encryptionKey) throw new Error("em prod ENCRYPTION_KEY é obrigatório");
   if (!cookieSecure) throw new Error("em prod COOKIE_SECURE deve ser true");
+  if (!mfaHmacKey) console.warn("[env] MFA_HMAC_KEY ausente — MFA não poderá ser ativado por usuários");
 }
 
 export const env = {
@@ -80,6 +82,7 @@ export const env = {
   DATABASE_URL,
   SESSION_SECRET: sessionSecret,
   ENCRYPTION_KEY: encryptionKey,
+  MFA_HMAC_KEY: mfaHmacKey,
   COOKIE_SECURE: cookieSecure,
   COOKIE_DOMAIN: optional("COOKIE_DOMAIN", ""),
   GOOGLE_CLIENT_ID: optional("GOOGLE_CLIENT_ID", ""),

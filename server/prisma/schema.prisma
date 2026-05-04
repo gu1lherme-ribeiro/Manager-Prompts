@@ -24,6 +24,9 @@ model User {
   apiKeys        UserApiKey[]
   sessions       Session[]
   passwordResets PasswordResetToken[]
+  mfaSettings    MfaSettings?
+  mfaChallenges  MfaChallenge[]
+  trustedDevices TrustedDevice[]
 
   @@index([email])
 }
@@ -102,6 +105,44 @@ model PasswordResetToken {
   usedAt    DateTime?
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+model MfaSettings {
+  userId    String    @id
+  enabled   Boolean   @default(false)
+  enabledAt DateTime?
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model MfaChallenge {
+  id        String    @id @default(cuid())
+  userId    String
+  codeHash  String    @db.VarChar(64)
+  expiresAt DateTime
+  usedAt    DateTime?
+  attempts  Int       @default(0)
+  ip        String?   @db.VarChar(64)
+  userAgent String?   @db.VarChar(255)
+  createdAt DateTime  @default(now())
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+model TrustedDevice {
+  id         String   @id @default(cuid())
+  userId     String
+  tokenHash  String   @unique @db.VarChar(64)
+  expiresAt  DateTime
+  lastUsedAt DateTime @default(now())
+  userAgent  String?  @db.VarChar(255)
+  ip         String?  @db.VarChar(64)
+  createdAt  DateTime @default(now())
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([expiresAt])
