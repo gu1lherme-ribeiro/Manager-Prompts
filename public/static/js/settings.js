@@ -1,5 +1,5 @@
-import { api, endpoints, ApiError } from "/static/js/api.js?v=20260504d";
-import { startIdleWatcher } from "/static/js/idle.js?v=20260504d";
+import { api, endpoints, ApiError } from "/static/js/api.js?v=20260505a";
+import { startIdleWatcher } from "/static/js/idle.js?v=20260505a";
 
 const PROVIDERS = ["anthropic", "openai", "gemini"];
 const PROVIDER_LABELS = {

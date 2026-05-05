@@ -2530,16 +2530,22 @@ body {
     inset: 0 auto 0 0;
     z-index: 40;
     width: min(88vw, 360px);
-    max-height: var(--app-h);
+    /* svh (small viewport) > dvh aqui: garante que o drawer NUNCA passe da
+       área visível mínima do iOS Safari (com URL bar exibida). Com 100dvh, em
+       transições da toolbar o cálculo não atualiza a tempo e o theme-switch
+       no rodapé ficava obscurecido pela URL bar — bug reportado 2026-05-05. */
+    max-height: 100svh;
     border-right: 1px solid var(--rule-strong);
     box-shadow: 8px 0 32px -16px oklch(0% 0 0 / 0.5);
     transform: translateX(-100%);
     transition: transform var(--dur-base) var(--ease-out-expo);
     /* Respeita notch/cutout no topo, esquerda e bottom (home indicator iOS).
-       O eixo direito não precisa — drawer não toca a borda física direita. */
+       O eixo direito não precisa — drawer não toca a borda física direita.
+       padding-bottom: garante folga acima do home indicator + space-sm extra
+       pra theme-switch nunca colar na borda do drawer (mesmo sem notch). */
     padding-top: max(var(--space-lg), env(safe-area-inset-top));
     padding-left: env(safe-area-inset-left);
-    padding-bottom: max(var(--space-md), env(safe-area-inset-bottom));
+    padding-bottom: max(var(--space-lg), calc(env(safe-area-inset-bottom) + var(--space-sm)));
   }
 
   /* Drawer default = fechado. Sem .sidebar-open o sidebar fica offscreen,
@@ -3519,6 +3525,25 @@ body {
   /* key-display pode estourar com chave longa; quebra controlada */
   .key-display {
     word-break: break-all;
+  }
+
+  /* settings-actions: em narrow mobile o ghost button único alinhado à direita
+     fica órfão (card vira "linha tracejada + botão flutuando"). Vira full-width
+     com borda visível pra parar de "flutuar" — lê como "ação do card", não
+     como label solta. Reportado em iPhone 2026-05-05. */
+  .settings-actions {
+    flex-direction: column;
+    align-items: stretch;
+    border-top: 0;
+    padding-top: var(--space-xs);
+  }
+
+  .settings-actions > .btn-ghost,
+  .settings-actions > .btn-primary {
+    width: 100%;
+    justify-content: center;
+    padding: var(--space-sm) var(--space-md);
+    border-color: var(--rule);
   }
 }
 
