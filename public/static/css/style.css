@@ -161,11 +161,22 @@
 }
 
 /* Scroll lock no body quando o drawer está aberto em mobile.
-   overscroll-behavior contém o rubber-band do iOS sem usar touch-action: none
-   (que cascateia para descendentes e mata o scroll do .toc dentro do drawer). */
+   touch-action atua APENAS no elemento alvo do touch (não cascateia pra
+   descendentes — o comentário antigo aqui estava errado). Logo, body
+   touch-action: none bloqueia gestos no body sem afetar .toc. */
 body.drawer-open {
   overflow: hidden;
   overscroll-behavior: contain;
+  /* iOS Safari: gesture-block no body pra que swipes no backdrop ou no
+     sliver do .main visível atrás do drawer não disparem rolagem. .toc
+     mantém pan-y próprio (regra abaixo) e segue scrollando dentro. */
+  touch-action: none;
+}
+
+/* Override pro scroller do drawer — dentro do drawer-open, gestos verticais
+   ainda navegam a lista de prompts. */
+body.drawer-open .toc {
+  touch-action: pan-y;
 }
 
 html {
@@ -2669,56 +2680,59 @@ body {
     display: none;
   }
 
-  /* Bug 1 (2026-05-05): "Config" no rodapé da sidebar parecia flutuar no meio
-     da row em narrow drawer (~345px). Causa: gap+padding de "Config·Sair"
-     somava ~38px e o ponto-separador em mono ocupa cell wide com glifo small,
-     dando impressão de "três coisas soltas". Solução: virar [Config|Sair] num
-     pill conectado com divider de 1px. Visualmente lê como UM grupo de ações,
-     desfaz a sensação de "Config deslocado". */
+  /* Rodapé da sidebar: Config + Sair em drawer mode.
+     Iteração 1 (2026-05-05) virou um pill bordeado [Config|Sair] — resolveu o
+     "deslocado" mas ficou cara de button group MUI/Bootstrap, fora da linguagem
+     dev-tool do resto do app (Warp/Linear/Zed: ghost links com divider sutil).
+     Iteração 2: ghost links sem container, separador vertical 1px no rule.
+     Mantém densidade alta, hover sutil (bg-hover + ink-1), zero ornamento. */
   .session-actions {
     gap: 0;
-    border: 1px solid var(--rule);
-    border-radius: 3px;
-    overflow: hidden;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    overflow: visible;
   }
 
   .session-link,
   .session-logout {
-    padding: var(--space-2xs) var(--space-xs);
-    border-radius: 0;
+    padding: var(--space-2xs) var(--space-sm);
     border: 0;
+    border-radius: 0;
+    background: transparent;
     min-height: 28px;
     display: inline-flex;
     align-items: center;
   }
 
-  .session-link {
-    border-right: 1px solid var(--rule);
-  }
-
   .session-link:hover,
   .session-logout:hover {
-    background: var(--bg-hover);
     color: var(--ink-1);
+    background: var(--bg-hover);
     border-color: transparent;
   }
-  .session-link {
-    /* Hover não pode tirar o divider */
-  }
-  .session-link:hover {
-    border-right-color: var(--rule);
-  }
 
-  /* O ponto-separador some — o divider visual já é o border-right do link. */
+  /* Separador: ponto vira régua vertical 1px (vocabulário visual do site —
+     mesmo tom dos border-bottom em sidebar-foot, dashed em settings-actions).
+     `color: transparent` esconde o glifo "·" sem usar display:none — preserva
+     o aria-hidden e o flow do flex sem reflow. */
   .session-sep {
-    display: none;
+    width: 1px;
+    height: 14px;
+    align-self: center;
+    background: var(--rule);
+    color: transparent;
+    user-select: none;
+    /* compensar o glifo invisível ainda ocupando inline space */
+    overflow: hidden;
+    flex: 0 0 1px;
   }
 
   /* Bug 2 (2026-05-05): swipe na sidebar aberta scrollava o .main por baixo
-     no iPhone. body.drawer-open já tinha overflow:hidden, mas o .main tem
-     overflow-y:auto próprio, e o backdrop não bloqueava o gesto.
-     Defesa em duas camadas: backdrop captura o gesto via touch-action:none,
-     e o .main é trancado enquanto drawer-open. */
+     no iPhone. Defesa em três camadas:
+       1. body.drawer-open touch-action:none (acima, fora do @media)
+       2. backdrop touch-action:none (aqui)
+       3. body.drawer-open .main pointer-events:none (regra fora do @media) */
   .sidebar-backdrop {
     touch-action: none;
   }
@@ -2727,10 +2741,15 @@ body {
 /* Scroll lock do conteúdo principal enquanto drawer está aberto.
    Fora do @media pra atuar no body.drawer-open (sincronizado pelo JS) sem
    depender de matchMedia adicional. Em desktop o body nunca recebe a classe,
-   então a regra é dormida. */
+   então a regra é dormida.
+
+   pointer-events:none é a defesa final: o sliver de ~12vw do .main visível à
+   direita do drawer NÃO pode receber tap nem swipe — qualquer gesto naquela
+   faixa cai no backdrop (que é position:fixed inset:0 e cobre tudo). */
 body.drawer-open .main {
   overflow: hidden;
   touch-action: none;
+  pointer-events: none;
 }
 
 /* Tablet portrait + drawer aberto: editor ganha respiração horizontal.
