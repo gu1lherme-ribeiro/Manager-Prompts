@@ -1,6 +1,6 @@
-import { api, endpoints, ApiError } from "/static/js/api.js?v=20260505c";
-import { sanitizeContent } from "/static/js/sanitize.js?v=20260505c";
-import { startIdleWatcher } from "/static/js/idle.js?v=20260505c";
+import { api, endpoints, ApiError } from "/static/js/api.js?v=20260505e";
+import { sanitizeContent } from "/static/js/sanitize.js?v=20260505e";
+import { startIdleWatcher } from "/static/js/idle.js?v=20260505e";
 
 const THEME_KEY = "prompts_theme";
 const LEGACY_STORAGE_KEY = "prompts_storage";
@@ -2027,11 +2027,28 @@ function isSidebarVisible() {
   return !elements.app.classList.contains("sidebar-closed");
 }
 
+/* iOS Safari ignora `touch-action: none` em algumas situações (gestos
+   iniciados antes do drawer abrir, momentum scroll preexistente, ou bugs
+   conhecidos no resolver de scroll-chaining). Defesa final: listener de
+   touchmove em document com preventDefault — bloqueia rolagem em qualquer
+   alvo que NÃO seja o scroller interno do drawer (.toc) ou o input do
+   filtro/rename de projetos (que precisam de seleção/cursor por touch). */
+function preventBackgroundScroll(e) {
+  if (e.target.closest(".toc")) return;
+  if (e.target.closest("input, textarea, [contenteditable]")) return;
+  e.preventDefault();
+}
+
 function syncDrawerState() {
   const mobile = mqDrawer.matches;
   const open = elements.app.classList.contains("sidebar-open");
   elements.sidebar.inert = mobile && !open;
   document.body.classList.toggle("drawer-open", mobile && open);
+  if (mobile && open) {
+    document.addEventListener("touchmove", preventBackgroundScroll, { passive: false });
+  } else {
+    document.removeEventListener("touchmove", preventBackgroundScroll, { passive: false });
+  }
   const expanded = String(isSidebarVisible());
   elements.btnCollapse.setAttribute("aria-expanded", expanded);
   elements.btnOpen.setAttribute("aria-expanded", expanded);

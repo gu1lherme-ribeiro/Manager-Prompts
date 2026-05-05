@@ -2920,9 +2920,18 @@ body.drawer-open .main {
    Aplicado por (pointer: coarse) — mais confiável que media de viewport
    pra alvos como Surface, iPad com Smart Keyboard removido, etc. */
 @media (pointer: coarse) {
+  /* iOS Safari auto-zoom: ao focar input com font-size < 16px, Safari faz
+     zoom até a largura do input ficar 16px-equivalente — e em alguns casos
+     o zoom não desfaz após o blur, deixando a tela travada. Fix: forçar 16px
+     em TODO input de texto que mobile pode focar. Faltavam os três inputs do
+     rail de projetos (filter/new/rename) — bug reportado 2026-05-05 ao criar
+     projeto via "+" no // projetos. */
   .search-input,
   .auth-input,
-  .improve-overlay-input {
+  .improve-overlay-input,
+  .projects-filter-input,
+  .projects-new-input,
+  .projects-item-rename-input {
     font-size: 16px;
   }
 
