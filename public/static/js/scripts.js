@@ -1,6 +1,6 @@
-import { api, endpoints, ApiError } from "/static/js/api.js?v=20260505e";
-import { sanitizeContent } from "/static/js/sanitize.js?v=20260505e";
-import { startIdleWatcher } from "/static/js/idle.js?v=20260505e";
+import { api, endpoints, ApiError } from "/static/js/api.js?v=20260505f";
+import { sanitizeContent } from "/static/js/sanitize.js?v=20260505f";
+import { startIdleWatcher } from "/static/js/idle.js?v=20260505f";
 
 const THEME_KEY = "prompts_theme";
 const LEGACY_STORAGE_KEY = "prompts_storage";

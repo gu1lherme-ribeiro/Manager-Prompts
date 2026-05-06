@@ -1,4 +1,4 @@
-import { endpoints, ApiError } from "/static/js/api.js?v=20260505e";
+import { endpoints, ApiError } from "/static/js/api.js?v=20260505f";
 
 const form = document.getElementById("forgot-form");
 const email = document.getElementById("email");

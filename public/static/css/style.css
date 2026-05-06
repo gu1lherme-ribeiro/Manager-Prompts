@@ -2995,9 +2995,13 @@ body.drawer-open .main {
   align-items: center;
   justify-content: space-between;
   gap: var(--space-sm);
-  padding-bottom: var(--space-sm);
-  margin-bottom: var(--space-sm);
-  border-bottom: 1px solid var(--rule);
+  /* Ordem do foot (2026-05-05): Tema acima, Identidade+ações abaixo (mais
+     perto da base no iPhone, melhor pra thumb-reach). O separador 1px que
+     antes era border-bottom (separando session-row do theme-switch abaixo)
+     vira border-top (separando session-row do theme-switch acima). */
+  padding-top: var(--space-sm);
+  margin-top: var(--space-sm);
+  border-top: 1px solid var(--rule);
   font-family: var(--font-mono);
   font-size: var(--fs-xs);
 }
