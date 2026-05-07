@@ -1,6 +1,8 @@
-import { api, endpoints, ApiError } from "/static/js/api.js?v=20260505f";
-import { sanitizeContent } from "/static/js/sanitize.js?v=20260505f";
-import { startIdleWatcher } from "/static/js/idle.js?v=20260505f";
+import { api, endpoints, ApiError } from "/static/js/api.js?v=20260508a";
+import { sanitizeContent } from "/static/js/sanitize.js?v=20260508a";
+import { startIdleWatcher } from "/static/js/idle.js?v=20260508a";
+import { streamImprove } from "/static/js/improve.js?v=20260508a";
+import { renderWordDiff } from "/static/js/diff.js?v=20260508a";
 
 const THEME_KEY = "prompts_theme";
 const LEGACY_STORAGE_KEY = "prompts_storage";
@@ -86,6 +88,7 @@ const elements = {
   improveOverlay: document.getElementById("improve-overlay"),
   improveOverlayClose: document.getElementById("improve-overlay-close"),
   improveOverlayRun: document.getElementById("improve-overlay-run"),
+  improveOverlayStop: document.getElementById("improve-overlay-stop"),
   improveOverlayApply: document.getElementById("improve-overlay-apply"),
   improveOverlayDiscard: document.getElementById("improve-overlay-discard"),
   improveOverlayInstruction: document.getElementById("improve-instruction"),
@@ -97,6 +100,11 @@ const elements = {
   improveOverlayResultLabel: document.querySelector(
     "#improve-overlay .improve-overlay-pane--result [data-slot='result-label']",
   ),
+  improvePresetTrigger: document.getElementById("improve-preset-trigger"),
+  improvePresetTriggerName: document.querySelector(
+    "#improve-preset-trigger [data-slot='name']",
+  ),
+  improvePresetPopover: document.getElementById("improve-preset-popover"),
   legacyBanner: document.getElementById("legacy-banner"),
   legacyBannerText: document.getElementById("legacy-banner-text"),
   legacyImport: document.getElementById("legacy-import"),
@@ -116,6 +124,24 @@ const improveState = {
   originalText: "",
   improvedText: null,
   loading: false,
+  // controller pra abortar o stream em andamento (botão "parar" / fechar overlay).
+  controller: null,
+  // texto plain acumulado durante o stream — fonte do "improvedText" final e
+  // do diff renderizado depois.
+  streamingBuffer: "",
+};
+
+// Presets de improve. `loaded` evita re-fetch a cada abertura do overlay (cache
+// na sessão; pra invalidar manualmente, refresh da página). `activeId` é o que
+// será mandado no próximo improve — null = ignora preset (BASE), undefined no
+// body deixaria o servidor usar o default, mas optamos por sempre mandar
+// explícito pra UI ficar coerente.
+const presetState = {
+  loaded: false,
+  list: [],
+  defaultId: null,
+  activeId: null,
+  popoverOpen: false,
 };
 
 /* --------------------------------------------------------------------------
@@ -1785,13 +1811,19 @@ function switchOverlayProvider(provider) {
   if (!getConnectedProviders().includes(provider)) return;
   improveState.provider = provider;
   improveState.improvedText = null;
+  improveState.streamingBuffer = "";
   // Resultado anterior fica obsoleto após troca — limpa e volta ao estado "executar".
+  // Reseta o pane original também (pode ter virado fragment com spans do diff anterior).
+  elements.improveOverlayOriginal.textContent = improveState.originalText;
   elements.improveOverlayImproved.textContent = "";
+  elements.improveOverlayImproved.classList.remove("improve-streaming-cursor");
   elements.improveOverlayMeta.textContent = "";
   elements.improveOverlayApply.disabled = true;
   elements.improveOverlayResultLabel.textContent = "aguardando…";
   elements.improveOverlayRun.disabled = false;
+  elements.improveOverlayRun.hidden = false;
   elements.improveOverlayRun.textContent = "executar";
+  elements.improveOverlayStop.hidden = true;
   renderOverlayProviders(provider);
 }
 
@@ -1801,31 +1833,65 @@ function openImproveOverlay(provider) {
   improveState.provider = provider;
   improveState.originalText = elements.promptContent.innerText.trim();
   improveState.improvedText = null;
+  improveState.streamingBuffer = "";
   improveState.loading = false;
+  improveState.controller = null;
 
   elements.improveOverlayOriginal.textContent = improveState.originalText;
   elements.improveOverlayImproved.textContent = "";
+  elements.improveOverlayImproved.classList.remove("improve-streaming-cursor");
   elements.improveOverlayInstruction.value = "";
   elements.improveOverlayMeta.textContent = "";
   elements.improveOverlayApply.disabled = true;
   renderOverlayProviders(provider);
   elements.improveOverlayResultLabel.textContent = "aguardando…";
   elements.improveOverlayRun.disabled = false;
+  elements.improveOverlayRun.hidden = false;
   elements.improveOverlayRun.textContent = "executar";
+  elements.improveOverlayStop.hidden = true;
 
   elements.improveOverlay.hidden = false;
   elements.improveOverlayInstruction.focus();
   document.addEventListener("keydown", onEscForOverlay);
+
+  // Cada abertura volta o preset ativo pro default. Lista é fetched sob demanda
+  // (lazy + cache de sessão) — só dispara request na primeira abertura.
+  presetState.activeId = presetState.defaultId;
+  syncPresetTrigger();
+  loadPresetsOnce();
 }
 
 function closeImproveOverlay() {
+  // Aborta qualquer stream em andamento — sem isso, o backend continuaria
+  // recebendo do provider e queimando tokens depois que o overlay fechou.
+  if (improveState.controller) {
+    try {
+      improveState.controller.abort();
+    } catch {
+      /* já abortado */
+    }
+  }
+  closePresetPopover();
   elements.improveOverlay.hidden = true;
   improveState.loading = false;
+  improveState.controller = null;
+  elements.improveOverlayImproved.classList.remove("improve-streaming-cursor");
   document.removeEventListener("keydown", onEscForOverlay);
 }
 
+function stopImprove() {
+  if (improveState.controller) {
+    try {
+      improveState.controller.abort();
+    } catch {
+      /* já abortado */
+    }
+  }
+}
+
 function onEscForOverlay(ev) {
-  if (ev.key === "Escape" && !improveState.loading) closeImproveOverlay();
+  // Esc fecha mesmo durante streaming — closeImproveOverlay aborta o controller.
+  if (ev.key === "Escape") closeImproveOverlay();
 }
 
 function setOverlayProvidersDisabled(disabled) {
@@ -1836,48 +1902,212 @@ function setOverlayProvidersDisabled(disabled) {
     });
 }
 
+async function loadPresetsOnce() {
+  if (presetState.loaded) return;
+  presetState.loaded = true;
+  // defaultId já vem do /me no init; lista preenchida sob demanda
+  presetState.defaultId = state.currentUser?.defaultImprovePresetId || null;
+  presetState.activeId = presetState.defaultId;
+  try {
+    const r = await endpoints.listImprovePresets();
+    presetState.list = r.items || [];
+    // /me pode estar desatualizado se o usuário mexeu no settings em outra aba —
+    // o GET acima é a fonte autoritativa.
+    presetState.defaultId = r.defaultId || null;
+    if (!presetState.activeId) presetState.activeId = presetState.defaultId;
+  } catch (err) {
+    console.error("[presets] load:", err);
+    presetState.loaded = false; // permite retry na próxima abertura
+  }
+  syncPresetTrigger();
+}
+
+function syncPresetTrigger() {
+  if (!elements.improvePresetTrigger) return;
+  const active = presetState.list.find((p) => p.id === presetState.activeId);
+  elements.improvePresetTriggerName.textContent = active ? active.name : "padrão";
+}
+
+function openPresetPopover() {
+  if (presetState.popoverOpen) return;
+  renderPresetPopover();
+  elements.improvePresetPopover.hidden = false;
+  elements.improvePresetTrigger.setAttribute("aria-expanded", "true");
+  presetState.popoverOpen = true;
+  document.addEventListener("click", onDocumentClickForPresetPopover, true);
+}
+
+function closePresetPopover() {
+  if (!presetState.popoverOpen) return;
+  elements.improvePresetPopover.hidden = true;
+  elements.improvePresetTrigger.setAttribute("aria-expanded", "false");
+  presetState.popoverOpen = false;
+  document.removeEventListener("click", onDocumentClickForPresetPopover, true);
+}
+
+function onDocumentClickForPresetPopover(ev) {
+  if (
+    ev.target.closest("#improve-preset-popover") ||
+    ev.target.closest("#improve-preset-trigger")
+  ) {
+    return;
+  }
+  closePresetPopover();
+}
+
+function renderPresetPopover() {
+  const host = elements.improvePresetPopover;
+  host.replaceChildren();
+
+  const makeOption = (id, label, hint) => {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "improve-preset-popover-option";
+    btn.dataset.presetId = id || "";
+    btn.setAttribute("role", "option");
+    const isActive = (id || null) === presetState.activeId;
+    btn.setAttribute("aria-selected", String(isActive));
+    if (isActive) btn.classList.add("is-active");
+
+    const caret = document.createElement("span");
+    caret.className = "improve-preset-popover-caret";
+    caret.setAttribute("aria-hidden", "true");
+    caret.textContent = "❯";
+    const name = document.createElement("span");
+    name.className = "improve-preset-popover-name";
+    name.textContent = label;
+    btn.appendChild(caret);
+    btn.appendChild(name);
+
+    if (hint) {
+      const tag = document.createElement("span");
+      tag.className = "improve-preset-popover-tag";
+      tag.textContent = hint;
+      btn.appendChild(tag);
+    }
+    return btn;
+  };
+
+  // "padrão" sempre como primeira opção (id = null = usar BASE).
+  host.appendChild(makeOption(null, "padrão", "BASE"));
+  for (const p of presetState.list) {
+    const hint = p.id === presetState.defaultId ? "default" : null;
+    host.appendChild(makeOption(p.id, p.name, hint));
+  }
+
+  const link = document.createElement("a");
+  link.className = "improve-preset-popover-link";
+  link.href = "/settings#sec-presets";
+  link.textContent = "configurar presets →";
+  host.appendChild(link);
+}
+
+function selectPreset(id) {
+  presetState.activeId = id || null;
+  syncPresetTrigger();
+  closePresetPopover();
+}
+
 async function runImprove() {
   if (!state.selectedId || !improveState.provider || improveState.loading) return;
+
+  // Capturado localmente pra detectar race: se um close+reopen+run novo
+  // tomar conta do estado durante este await, sabemos que não devemos mexer
+  // mais no UI quando este voltar.
+  const myController = new AbortController();
   improveState.loading = true;
-  elements.improveOverlayRun.disabled = true;
-  elements.improveOverlayRun.textContent = "melhorando…";
+  improveState.streamingBuffer = "";
+  improveState.improvedText = null;
+  improveState.controller = myController;
+
+  // UI estado "streaming": esconde "executar", mostra "parar", limpa pane direito.
+  elements.improveOverlayRun.hidden = true;
+  elements.improveOverlayStop.hidden = false;
+  elements.improveOverlayStop.disabled = false;
+  elements.improveOverlayApply.disabled = true;
+  elements.improveOverlayMeta.textContent = "";
   elements.improveOverlayResultLabel.textContent = `chamando ${improveState.provider}…`;
+  // Pane "original" volta a ser texto plain (pode ter virado spans num improve anterior).
+  elements.improveOverlayOriginal.textContent = improveState.originalText;
+  elements.improveOverlayImproved.textContent = "";
+  elements.improveOverlayImproved.classList.add("improve-streaming-cursor");
   setMainStatus(`$ melhorando com ${improveState.provider}…`);
   setOverlayProvidersDisabled(true);
 
-  try {
-    const body = { provider: improveState.provider };
-    const instr = elements.improveOverlayInstruction.value.trim();
-    if (instr) body.instruction = instr;
-    const result = await endpoints.improvePrompt(state.selectedId, body);
-    improveState.improvedText = result.improvedContent;
-    elements.improveOverlayImproved.textContent = result.improvedContent;
+  let aborted = false;
+  let errored = false;
+  let doneMeta = null;
+
+  await streamImprove({
+    promptId: state.selectedId,
+    provider: improveState.provider,
+    instruction: elements.improveOverlayInstruction.value.trim(),
+    presetId: presetState.activeId,
+    signal: myController.signal,
+    onChunk: (text) => {
+      improveState.streamingBuffer += text;
+      // textContent é seguro (escapa) e auto-scroll dá sensação de digitação.
+      elements.improveOverlayImproved.textContent = improveState.streamingBuffer;
+      elements.improveOverlayImproved.scrollTop = elements.improveOverlayImproved.scrollHeight;
+    },
+    onDone: (meta) => {
+      doneMeta = meta;
+    },
+    onError: ({ code, message }) => {
+      errored = true;
+      const msg = message || code || "erro";
+      elements.improveOverlayImproved.textContent = `// erro: ${msg}`;
+      elements.improveOverlayResultLabel.textContent = "erro";
+    },
+    onAbort: () => {
+      aborted = true;
+    },
+  });
+
+  // Race guard: se o overlay foi fechado/reaberto e outro run assumiu o estado,
+  // não mexemos mais em nada. O run novo cuida do UI.
+  if (improveState.controller !== myController) return;
+
+  elements.improveOverlayImproved.classList.remove("improve-streaming-cursor");
+
+  if (aborted) {
+    elements.improveOverlayResultLabel.textContent = "// cancelado";
+  } else if (!errored && doneMeta) {
+    improveState.improvedText = improveState.streamingBuffer;
+    // Diff word-level — só agora, com texto completo. Lazy-loads jsdiff via CDN.
+    try {
+      const { originalFragment, improvedFragment } = await renderWordDiff(
+        improveState.originalText,
+        improveState.improvedText,
+      );
+      elements.improveOverlayOriginal.replaceChildren(originalFragment);
+      elements.improveOverlayImproved.replaceChildren(improvedFragment);
+    } catch (err) {
+      console.error("[diff]", err);
+      // Fallback: deixa texto plain se o jsdiff não carregar (offline, CSP, etc).
+      elements.improveOverlayOriginal.textContent = improveState.originalText;
+      elements.improveOverlayImproved.textContent = improveState.improvedText;
+    }
     elements.improveOverlayApply.disabled = false;
-    const usage = result.usage || {};
+    const usage = doneMeta.usage || {};
     const usageStr =
       usage.inputTokens != null || usage.outputTokens != null
         ? `${usage.inputTokens ?? "?"} in · ${usage.outputTokens ?? "?"} out`
         : "";
-    elements.improveOverlayMeta.textContent = [result.model, usageStr]
+    elements.improveOverlayMeta.textContent = [doneMeta.model, usageStr]
       .filter(Boolean)
       .join(" · ");
     elements.improveOverlayResultLabel.textContent = "melhorado";
-  } catch (err) {
-    if (err instanceof ApiError) {
-      elements.improveOverlayImproved.textContent = `// erro: ${err.message}`;
-      elements.improveOverlayResultLabel.textContent = "erro";
-    } else {
-      console.error(err);
-      elements.improveOverlayImproved.textContent = "// falha inesperada";
-      elements.improveOverlayResultLabel.textContent = "erro";
-    }
-  } finally {
-    improveState.loading = false;
-    elements.improveOverlayRun.disabled = false;
-    elements.improveOverlayRun.textContent = "reexecutar";
-    setOverlayProvidersDisabled(false);
-    updateMainMeta();
   }
+
+  improveState.loading = false;
+  improveState.controller = null;
+  elements.improveOverlayStop.hidden = true;
+  elements.improveOverlayRun.hidden = false;
+  elements.improveOverlayRun.disabled = false;
+  elements.improveOverlayRun.textContent = improveState.improvedText ? "reexecutar" : "executar";
+  setOverlayProvidersDisabled(false);
+  updateMainMeta();
 }
 
 /* --------------------------------------------------------------------------
@@ -2140,6 +2370,17 @@ function bindEvents() {
     switchOverlayProvider(btn.dataset.provider);
   });
   elements.improveOverlayRun.addEventListener("click", runImprove);
+  elements.improveOverlayStop.addEventListener("click", stopImprove);
+  elements.improvePresetTrigger?.addEventListener("click", (ev) => {
+    ev.stopPropagation();
+    if (presetState.popoverOpen) closePresetPopover();
+    else openPresetPopover();
+  });
+  elements.improvePresetPopover?.addEventListener("click", (ev) => {
+    const opt = ev.target.closest(".improve-preset-popover-option");
+    if (!opt) return;
+    selectPreset(opt.dataset.presetId || null);
+  });
   elements.improveOverlayApply.addEventListener("click", applyImprovement);
   elements.improveOverlayDiscard.addEventListener("click", closeImproveOverlay);
   elements.improveOverlayClose.addEventListener("click", closeImproveOverlay);

@@ -9,6 +9,7 @@ import {
   saveApiKey,
   deleteApiKey,
 } from "../services/apiKeys.js";
+import { setDefaultForUser as setDefaultPresetForUser } from "../services/improvePresets.js";
 import { verifyPassword } from "../services/passwords.js";
 import {
   createChallenge,
@@ -117,6 +118,30 @@ router.patch("/default-provider", async (req, res, next) => {
       select: { defaultProvider: true },
     });
     res.json({ defaultProvider: user.defaultProvider });
+  } catch (err) {
+    if (err?.issues) {
+      return res.status(400).json({
+        error: { code: "invalid_input", message: err.issues[0]?.message },
+      });
+    }
+    next(err);
+  }
+});
+
+const patchDefaultPresetSchema = z.object({
+  id: z.string().min(1).max(191).nullable(),
+});
+
+router.patch("/default-improve-preset", async (req, res, next) => {
+  try {
+    const { id } = patchDefaultPresetSchema.parse(req.body);
+    const ok = await setDefaultPresetForUser(req.user.id, id);
+    if (!ok) {
+      return res.status(404).json({
+        error: { code: "not_found", message: "preset não encontrado" },
+      });
+    }
+    res.json({ defaultImprovePresetId: id });
   } catch (err) {
     if (err?.issues) {
       return res.status(400).json({

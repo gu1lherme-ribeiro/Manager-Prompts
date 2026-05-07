@@ -12,6 +12,7 @@ import promptsRouter from "./routes/prompts.js";
 import projectsRouter from "./routes/projects.js";
 import settingsRouter from "./routes/settings.js";
 import improveRouter from "./routes/improve.js";
+import improvePresetsRouter from "./routes/improvePresets.js";
 import mfaRouter from "./routes/mfa.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -76,6 +77,7 @@ export function createApp() {
   app.use("/api/prompts", promptsRouter);
   app.use("/api/prompts", improveRouter); // monta /api/prompts/:id/improve
   app.use("/api/projects", projectsRouter);
+  app.use("/api/settings/improve-presets", improvePresetsRouter);
   app.use("/api/settings", settingsRouter);
 
   const sendHtml = (file) => (_req, res) => res.sendFile(resolve(PUBLIC_DIR, file));

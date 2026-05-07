@@ -1,22 +1,32 @@
 import { env } from "../../config/env.js";
 import { buildSystemPrompt, buildUserMessage } from "./systemPrompt.js";
 import { ProviderError, messageFor } from "./anthropic.js";
+import { parseSSEStream } from "./sseParser.js";
 
-export async function improveWithGemini({ originalTitle, originalContent, userInstruction, apiKey }) {
+// Endpoint :streamGenerateContent com ?alt=sse devolve frames no mesmo formato
+// do generateContent, um por chunk gerado. usageMetadata chega no último frame.
+export async function* streamImproveWithGemini({
+  originalTitle,
+  originalContent,
+  userInstruction,
+  systemPromptOverride,
+  apiKey,
+  signal,
+}) {
   const model = env.GEMINI_MODEL;
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`;
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(
+    model,
+  )}:streamGenerateContent?alt=sse`;
 
   const body = {
     systemInstruction: {
       role: "system",
-      parts: [{ text: buildSystemPrompt({ userInstruction }) }],
+      parts: [{ text: buildSystemPrompt({ userInstruction, systemPromptOverride }) }],
     },
     contents: [
       {
         role: "user",
-        parts: [
-          { text: buildUserMessage({ title: originalTitle, content: originalContent }) },
-        ],
+        parts: [{ text: buildUserMessage({ title: originalTitle, content: originalContent }) }],
       },
     ],
     generationConfig: {
@@ -32,33 +42,53 @@ export async function improveWithGemini({ originalTitle, originalContent, userIn
       headers: {
         "content-type": "application/json",
         "x-goog-api-key": apiKey,
+        accept: "text/event-stream",
       },
       body: JSON.stringify(body),
+      signal,
     });
   } catch (err) {
+    if (err?.name === "AbortError") throw err;
     throw new ProviderError("network", "falha de rede ao chamar gemini", { cause: err });
   }
 
-  const data = await res.json().catch(() => ({}));
   if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
     throw new ProviderError(mapGeminiError(res.status), messageFor("gemini", data), {
       status: res.status,
       detail: data,
     });
   }
 
-  const parts = data.candidates?.[0]?.content?.parts || [];
-  const text = parts.map((p) => p.text || "").join("\n").trim();
-  if (!text) throw new ProviderError("empty", "gemini retornou resposta vazia");
+  let inputTokens = null;
+  let outputTokens = null;
+  let receivedAny = false;
 
-  return {
-    improvedContent: text,
-    model,
-    usage: {
-      inputTokens: data.usageMetadata?.promptTokenCount ?? null,
-      outputTokens: data.usageMetadata?.candidatesTokenCount ?? null,
-    },
-  };
+  for await (const frame of parseSSEStream(res.body)) {
+    let payload;
+    try {
+      payload = JSON.parse(frame.data);
+    } catch {
+      continue;
+    }
+    const parts = payload.candidates?.[0]?.content?.parts || [];
+    const text = parts.map((p) => p.text || "").join("");
+    if (text) {
+      receivedAny = true;
+      yield { type: "chunk", text };
+    }
+    if (payload.usageMetadata) {
+      if (payload.usageMetadata.promptTokenCount != null) {
+        inputTokens = payload.usageMetadata.promptTokenCount;
+      }
+      if (payload.usageMetadata.candidatesTokenCount != null) {
+        outputTokens = payload.usageMetadata.candidatesTokenCount;
+      }
+    }
+  }
+
+  if (!receivedAny) throw new ProviderError("empty", "gemini retornou resposta vazia");
+  yield { type: "done", model, usage: { inputTokens, outputTokens } };
 }
 
 function mapGeminiError(status) {

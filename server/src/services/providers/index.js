@@ -1,15 +1,15 @@
-import { improveWithAnthropic } from "./anthropic.js";
-import { improveWithOpenAI } from "./openai.js";
-import { improveWithGemini } from "./gemini.js";
+import { streamImproveWithAnthropic } from "./anthropic.js";
+import { streamImproveWithOpenAI } from "./openai.js";
+import { streamImproveWithGemini } from "./gemini.js";
 
 export { ProviderError } from "./anthropic.js";
 
-const ADAPTERS = {
-  anthropic: improveWithAnthropic,
-  openai: improveWithOpenAI,
-  gemini: improveWithGemini,
+const STREAM_ADAPTERS = {
+  anthropic: streamImproveWithAnthropic,
+  openai: streamImproveWithOpenAI,
+  gemini: streamImproveWithGemini,
 };
 
-export function getAdapter(provider) {
-  return ADAPTERS[provider] || null;
+export function getStreamAdapter(provider) {
+  return STREAM_ADAPTERS[provider] || null;
 }

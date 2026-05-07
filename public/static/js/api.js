@@ -2,7 +2,7 @@
 
 const CSRF_COOKIE = "mp_csrf";
 
-function readCookie(name) {
+export function readCookie(name) {
   const match = document.cookie.match(
     new RegExp("(?:^|; )" + name.replace(/([.$?*|{}()[\]\\/+^])/g, "\\$1") + "=([^;]*)")
   );
@@ -100,6 +100,16 @@ export const endpoints = {
 
   improvePrompt: (id, body) =>
     api.post(`/api/prompts/${encodeURIComponent(id)}/improve`, body || {}),
+
+  // Presets de improve (custom system prompts por usuário)
+  listImprovePresets: () => api.get("/api/settings/improve-presets"),
+  createImprovePreset: (body) => api.post("/api/settings/improve-presets", body),
+  updateImprovePreset: (id, body) =>
+    api.patch(`/api/settings/improve-presets/${encodeURIComponent(id)}`, body),
+  deleteImprovePreset: (id) =>
+    api.delete(`/api/settings/improve-presets/${encodeURIComponent(id)}`),
+  setDefaultImprovePreset: (id) =>
+    api.patch("/api/settings/default-improve-preset", { id }),
 
   // MFA — fluxo de login
   mfaVerify: (body) => api.post("/api/auth/mfa/verify", body),

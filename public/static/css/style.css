@@ -3995,6 +3995,123 @@ body.drawer-open .main {
   border-color: var(--rule);
 }
 
+/* Linha do chip de preset no overlay — mora acima da `.improve-overlay-instruction`.
+   Layout em flex com popover absoluto ancorado ao trigger. */
+.improve-overlay-preset-row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-xs);
+}
+
+.improve-overlay-preset-label {
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  color: var(--ink-4);
+  white-space: nowrap;
+}
+
+.improve-overlay-preset-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2xs);
+  padding: 4px var(--space-sm);
+  background: var(--bg-sunk);
+  border: 1px solid var(--rule);
+  border-radius: 3px;
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  color: var(--ink-2);
+  cursor: pointer;
+  transition: border-color var(--dur-fast) var(--ease-out-quart),
+              color var(--dur-fast) var(--ease-out-quart);
+}
+.improve-overlay-preset-trigger:hover {
+  border-color: var(--rule-strong);
+  color: var(--ink-1);
+}
+.improve-overlay-preset-trigger[aria-expanded="true"] {
+  border-color: var(--accent);
+  color: var(--ink-1);
+}
+.improve-overlay-preset-prefix {
+  color: var(--accent);
+}
+.improve-overlay-preset-name {
+  color: var(--ink-1);
+}
+.improve-overlay-preset-caret {
+  color: var(--ink-4);
+  font-size: 0.75em;
+}
+
+.improve-preset-popover {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  z-index: 25;
+  display: flex;
+  flex-direction: column;
+  min-width: 240px;
+  max-width: 360px;
+  padding: var(--space-2xs);
+  background: var(--bg-elev);
+  border: 1px solid var(--rule-strong);
+  border-radius: 4px;
+  box-shadow: var(--shadow-card);
+}
+.improve-preset-popover-option {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  column-gap: var(--space-sm);
+  align-items: center;
+  padding: 6px var(--space-sm);
+  background: transparent;
+  border: 0;
+  border-radius: 3px;
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  text-align: left;
+  color: var(--ink-2);
+  cursor: pointer;
+}
+.improve-preset-popover-option:hover {
+  background: var(--bg-hover);
+}
+.improve-preset-popover-option.is-active {
+  color: var(--ink-1);
+}
+.improve-preset-popover-option.is-active .improve-preset-popover-caret {
+  color: var(--accent);
+}
+.improve-preset-popover-caret {
+  color: var(--ink-4);
+  font-size: 0.75em;
+}
+.improve-preset-popover-name {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.improve-preset-popover-tag {
+  color: var(--accent-dim);
+  font-size: 0.85em;
+}
+.improve-preset-popover-link {
+  display: block;
+  margin-top: var(--space-2xs);
+  padding: 6px var(--space-sm);
+  border-top: 1px solid var(--rule);
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  color: var(--accent);
+  text-decoration: none;
+}
+.improve-preset-popover-link:hover {
+  text-decoration: underline;
+}
+
 .improve-overlay-instruction {
   display: grid;
   grid-template-columns: auto 1fr auto;
@@ -4025,7 +4142,8 @@ body.drawer-open .main {
   border-color: var(--accent);
 }
 
-.improve-overlay-run {
+.improve-overlay-run,
+.improve-overlay-stop {
   padding: var(--space-xs) var(--space-md);
 }
 
@@ -4079,6 +4197,36 @@ body.drawer-open .main {
   line-height: var(--lh-mono);
   color: var(--ink-1);
   -webkit-overflow-scrolling: touch;
+}
+
+/* Diff word-level — aplicado nos dois panes só após o stream terminar.
+   Texto neutro fica em --ink-2 (legível mas recuado), removidos em vermelho com
+   strike (pane "original"), adicionados em verde-terminal (pane "melhorado"). */
+.diff-equal {
+  color: var(--ink-2);
+}
+.diff-removed {
+  color: var(--danger);
+  text-decoration: line-through;
+  text-decoration-thickness: 1px;
+}
+.diff-added {
+  color: oklch(72% 0.16 145);
+  background: color-mix(in oklch, oklch(72% 0.16 145) 14%, transparent);
+  border-radius: 2px;
+  padding: 0 1px;
+}
+
+/* Cursor pulsante exibido no pane "melhorado" durante o streaming. */
+.improve-streaming-cursor::after {
+  content: "▍";
+  display: inline-block;
+  margin-left: 1px;
+  color: var(--accent);
+  animation: improve-cursor-blink 1s steps(1) infinite;
+}
+@keyframes improve-cursor-blink {
+  50% { opacity: 0; }
 }
 
 .improve-overlay-foot {
@@ -4138,7 +4286,8 @@ body.drawer-open .main {
     white-space: normal;
   }
 
-  .improve-overlay-run {
+  .improve-overlay-run,
+  .improve-overlay-stop {
     width: 100%;
     justify-content: center;
   }
@@ -4327,7 +4476,8 @@ body.drawer-open .main {
     white-space: nowrap;
   }
 
-  .improve-overlay-run {
+  .improve-overlay-run,
+  .improve-overlay-stop {
     width: auto;
   }
 
@@ -4612,4 +4762,156 @@ body.drawer-open .main {
 
 .trusted-device-ua {
   color: var(--ink-2);
+}
+
+/* =========================================================================
+   Presets de improve em /settings — lista, form de edição, default badge.
+   Vocabulário visual mimica `.keys-list` mas com row mais alta (preview de
+   systemPrompt embaixo do nome).
+   ========================================================================= */
+
+.presets-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.presets-empty {
+  margin: var(--space-sm) 0 0;
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  color: var(--ink-4);
+}
+
+.preset-row {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2xs);
+  padding: var(--space-sm) 0;
+  font-family: var(--font-mono);
+  font-size: var(--fs-sm);
+  border-bottom: 1px dashed var(--rule);
+}
+.preset-row:last-child {
+  border-bottom: 0;
+}
+
+.preset-row-head {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+.preset-row-caret {
+  color: var(--ink-4);
+}
+.preset-row.is-default .preset-row-caret {
+  color: var(--accent);
+}
+.preset-row-name {
+  color: var(--ink-1);
+  font-weight: 500;
+}
+.preset-row.is-default .preset-row-name {
+  color: var(--ink-1);
+}
+.preset-row-default {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px var(--space-xs);
+  background: color-mix(in oklch, var(--accent) 20%, transparent);
+  border-radius: 2px;
+  font-size: var(--fs-2xs);
+  color: var(--accent-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.preset-row-preview {
+  margin: 0;
+  padding-left: calc(var(--space-sm) + 1ch); /* alinha após o caret */
+  color: var(--ink-3);
+  font-size: var(--fs-xs);
+  line-height: 1.5;
+  word-break: break-word;
+}
+.preset-row-actions {
+  display: inline-flex;
+  gap: var(--space-xs);
+  padding-left: calc(var(--space-sm) + 1ch);
+  margin-top: var(--space-2xs);
+}
+
+/* Form de criação/edição. Aparece inline abaixo do botão "+ novo preset". */
+.presets-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  margin-top: var(--space-sm);
+  padding: var(--space-md);
+  background: var(--bg-sunk);
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+}
+.presets-form-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+.presets-form-row--textarea {
+  flex-direction: column;
+  align-items: stretch;
+  position: relative;
+}
+.presets-form-label {
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  color: var(--ink-4);
+  white-space: nowrap;
+  min-width: 8ch;
+}
+.presets-form-input,
+.presets-form-textarea {
+  flex: 1;
+  background: var(--bg);
+  border: 1px solid var(--rule);
+  border-radius: 3px;
+  padding: var(--space-xs) var(--space-sm);
+  font-family: var(--font-mono);
+  font-size: var(--fs-sm);
+  color: var(--ink-1);
+  outline: none;
+  transition: border-color var(--dur-fast) var(--ease-out-quart);
+}
+.presets-form-textarea {
+  resize: vertical;
+  min-height: 200px;
+  line-height: var(--lh-mono);
+}
+.presets-form-input:focus,
+.presets-form-textarea:focus {
+  border-color: var(--accent);
+}
+.presets-form-counter {
+  position: absolute;
+  right: var(--space-xs);
+  bottom: var(--space-xs);
+  font-family: var(--font-mono);
+  font-size: var(--fs-2xs);
+  color: var(--ink-4);
+  pointer-events: none;
+  background: var(--bg);
+  padding: 0 4px;
+  border-radius: 2px;
+}
+.presets-form-counter.is-over {
+  color: var(--danger);
+}
+.presets-form-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+.presets-form-actions-spacer {
+  flex: 1;
 }

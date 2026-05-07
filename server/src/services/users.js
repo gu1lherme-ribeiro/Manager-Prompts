@@ -14,6 +14,7 @@ export async function meResponse(user) {
     lastName: user.lastName,
     displayName: user.displayName,
     defaultProvider: user.defaultProvider,
+    defaultImprovePresetId: user.defaultImprovePresetId || null,
     hasGoogle: !!user.googleSub,
     hasPassword: !!user.passwordHash,
     hasKeys,

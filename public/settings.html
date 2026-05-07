@@ -10,7 +10,7 @@
     <meta name="theme-color" content="oklch(18% 0.011 250)" media="(prefers-color-scheme: dark)" />
     <meta name="theme-color" content="oklch(97% 0.005 250)" media="(prefers-color-scheme: light)" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg?v=3" sizes="any" />
-    <link rel="stylesheet" href="/static/css/style.css?v=20260505f" />
+    <link rel="stylesheet" href="/static/css/style.css?v=20260508a" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -89,6 +89,74 @@
         </p>
         <ul class="keys-list" id="keys-list" aria-label="Chaves por provider"></ul>
       </section>
+
+      <section class="settings-section" aria-labelledby="sec-presets">
+        <h2 id="sec-presets" class="settings-section-title">
+          <span class="settings-section-prefix" aria-hidden="true">//</span> Presets De Improve
+        </h2>
+        <p class="settings-hint">
+          Presets customizam o <em>system prompt</em> usado pelo melhorar. Sem nenhum
+          preset ativo, usa o template padrão. Limite de 20 por usuário.
+        </p>
+
+        <ul class="presets-list" id="presets-list" aria-label="Presets cadastrados"></ul>
+        <p class="presets-empty" id="presets-empty" hidden>
+          // nenhum preset cadastrado — improve usa o template padrão.
+        </p>
+
+        <div class="settings-actions" style="justify-content:flex-start;border-top:none;padding-top:0;">
+          <button type="button" class="btn-ghost" id="presets-add">+ novo preset</button>
+        </div>
+
+        <form class="presets-form" id="presets-form" hidden>
+          <div class="presets-form-row">
+            <label class="presets-form-label" for="presets-form-name">// nome</label>
+            <input
+              type="text"
+              class="presets-form-input"
+              id="presets-form-name"
+              maxlength="80"
+              placeholder="ex: código, marketing, tradução"
+              autocomplete="off"
+              spellcheck="false"
+            />
+          </div>
+          <div class="presets-form-row presets-form-row--textarea">
+            <label class="presets-form-label" for="presets-form-system-prompt">// system prompt</label>
+            <textarea
+              class="presets-form-textarea"
+              id="presets-form-system-prompt"
+              maxlength="4000"
+              rows="12"
+              spellcheck="false"
+            ></textarea>
+            <span class="presets-form-counter" id="presets-form-counter" aria-live="polite">0 / 4000</span>
+          </div>
+          <p class="auth-error" id="presets-form-error" hidden></p>
+          <div class="presets-form-actions">
+            <button type="button" class="btn-ghost" id="presets-form-restore">restaurar template</button>
+            <span class="presets-form-actions-spacer"></span>
+            <button type="button" class="btn-ghost" id="presets-form-cancel">cancelar</button>
+            <button type="submit" class="btn-primary" id="presets-form-save">salvar</button>
+          </div>
+        </form>
+      </section>
+
+      <template id="tpl-preset-row">
+        <li class="preset-row" data-id="">
+          <header class="preset-row-head">
+            <span class="preset-row-caret" aria-hidden="true">❯</span>
+            <span class="preset-row-name" data-slot="name"></span>
+            <span class="preset-row-default" data-slot="default-badge" hidden>padrão</span>
+          </header>
+          <p class="preset-row-preview" data-slot="preview"></p>
+          <div class="preset-row-actions">
+            <button type="button" class="key-action" data-action="set-default">tornar padrão</button>
+            <button type="button" class="key-action" data-action="edit">editar</button>
+            <button type="button" class="key-action key-action--danger" data-action="remove">remover</button>
+          </div>
+        </li>
+      </template>
 
       <section class="settings-section settings-mfa" id="card-mfa" aria-labelledby="sec-mfa">
         <h2 id="sec-mfa" class="settings-section-title">
@@ -202,6 +270,6 @@
       </li>
     </template>
 
-    <script type="module" src="/static/js/settings.js?v=20260505f"></script>
+    <script type="module" src="/static/js/settings.js?v=20260508a"></script>
   </body>
 </html>

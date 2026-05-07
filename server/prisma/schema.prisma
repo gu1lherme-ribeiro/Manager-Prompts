@@ -8,25 +8,28 @@ generator client {
 }
 
 model User {
-  id              String   @id @default(cuid())
-  email           String   @unique
-  passwordHash    String?
-  firstName       String?  @db.VarChar(80)
-  lastName        String?  @db.VarChar(80)
-  displayName     String?
-  googleSub       String?  @unique
-  defaultProvider String?  @db.VarChar(16)
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id                     String   @id @default(cuid())
+  email                  String   @unique
+  passwordHash           String?
+  firstName              String?  @db.VarChar(80)
+  lastName               String?  @db.VarChar(80)
+  displayName            String?
+  googleSub              String?  @unique
+  defaultProvider        String?  @db.VarChar(16)
+  defaultImprovePresetId String?
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
 
-  prompts        Prompt[]
-  projects       Project[]
-  apiKeys        UserApiKey[]
-  sessions       Session[]
-  passwordResets PasswordResetToken[]
-  mfaSettings    MfaSettings?
-  mfaChallenges  MfaChallenge[]
-  trustedDevices TrustedDevice[]
+  prompts              Prompt[]
+  projects             Project[]
+  apiKeys              UserApiKey[]
+  sessions             Session[]
+  passwordResets       PasswordResetToken[]
+  mfaSettings          MfaSettings?
+  mfaChallenges        MfaChallenge[]
+  trustedDevices       TrustedDevice[]
+  improvePresets       ImprovePreset[]      @relation("UserPresets")
+  defaultImprovePreset ImprovePreset?       @relation("UserDefaultPreset", fields: [defaultImprovePresetId], references: [id], onDelete: SetNull)
 
   @@index([email])
 }
@@ -131,6 +134,21 @@ model MfaChallenge {
 
   @@index([userId])
   @@index([expiresAt])
+}
+
+model ImprovePreset {
+  id           String   @id @default(cuid())
+  userId       String
+  name         String   @db.VarChar(80)
+  systemPrompt String   @db.Text
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @default(now()) @updatedAt
+
+  user        User   @relation("UserPresets", fields: [userId], references: [id], onDelete: Cascade)
+  defaultedBy User[] @relation("UserDefaultPreset")
+
+  @@unique([userId, name])
+  @@index([userId, updatedAt(sort: Desc)])
 }
 
 model TrustedDevice {

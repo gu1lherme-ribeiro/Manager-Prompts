@@ -1,7 +1,7 @@
-// Meta-prompt único — usado pelos 3 adapters.
-// Mantido no servidor para evitar prompt-injection trivial por parte do usuário.
+// Meta-prompt — exportado pra que /api/settings/improve-presets possa devolver
+// como template inicial pro frontend popular o textarea de criação.
 
-const BASE = `Você é um engenheiro de prompts sênior. Sua tarefa é melhorar o prompt fornecido, mantendo a intenção original do autor.
+export const BASE = `Você é um engenheiro de prompts sênior. Sua tarefa é melhorar o prompt fornecido, mantendo a intenção original do autor.
 
 Objetivos de melhoria:
 - clareza e remoção de ambiguidade;
@@ -15,12 +15,16 @@ Regras de saída:
 - NÃO comente o que foi alterado;
 - retorne APENAS o prompt melhorado, pronto para uso.`;
 
-export function buildSystemPrompt({ userInstruction } = {}) {
+// Quando o usuário tem um preset ativo, `systemPromptOverride` substitui o BASE
+// inteiro. Mantemos a `userInstruction` (max 500 chars) sempre apensada — ela é
+// o "tweak" da execução atual, ortogonal ao preset.
+export function buildSystemPrompt({ userInstruction, systemPromptOverride } = {}) {
+  const base = (systemPromptOverride || "").trim() || BASE;
   const instr = (userInstruction || "").trim();
-  if (!instr) return BASE;
+  if (!instr) return base;
   // truncamos a instrução do usuário para conter o raio de injection
   const safe = instr.slice(0, 500);
-  return `${BASE}\n\nInstrução adicional do autor (aplicar quando consistente com os objetivos acima): ${safe}`;
+  return `${base}\n\nInstrução adicional do autor (aplicar quando consistente com os objetivos acima): ${safe}`;
 }
 
 export function buildUserMessage({ title, content }) {

@@ -1,5 +1,5 @@
-import { api, endpoints, ApiError } from "/static/js/api.js?v=20260505f";
-import { startIdleWatcher } from "/static/js/idle.js?v=20260505f";
+import { api, endpoints, ApiError } from "/static/js/api.js?v=20260508a";
+import { startIdleWatcher } from "/static/js/idle.js?v=20260508a";
 
 const PROVIDERS = ["anthropic", "openai", "gemini"];
 const PROVIDER_LABELS = {
@@ -467,4 +467,211 @@ if (_mfaCard) (function setupMfaCard() {
   });
 
   loadMfa();
+})();
+
+/* =========================================================================
+   Presets de improve — CRUD + default
+   ========================================================================= */
+const _presetsSection = document.getElementById("presets-list");
+if (_presetsSection) (function setupPresets() {
+  const list      = _presetsSection;
+  const empty     = document.getElementById("presets-empty");
+  const tpl       = document.getElementById("tpl-preset-row");
+  const btnAdd    = document.getElementById("presets-add");
+  const form      = document.getElementById("presets-form");
+  const nameInput = document.getElementById("presets-form-name");
+  const promptTa  = document.getElementById("presets-form-system-prompt");
+  const counter   = document.getElementById("presets-form-counter");
+  const btnRestore= document.getElementById("presets-form-restore");
+  const btnCancel = document.getElementById("presets-form-cancel");
+  const btnSave   = document.getElementById("presets-form-save");
+  const errBox    = document.getElementById("presets-form-error");
+
+  // editingId: null = criando, "<id>" = editando aquele preset
+  const presetState = {
+    items: [],
+    template: "",
+    defaultId: null,
+    editingId: null,
+  };
+
+  function esc(s) {
+    return String(s ?? "").replace(/[&<>"']/g, (c) => (
+      { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]
+    ));
+  }
+
+  function preview(text) {
+    const norm = (text || "").replace(/\s+/g, " ").trim();
+    return norm.length > 120 ? norm.slice(0, 120) + "…" : norm;
+  }
+
+  function renderList() {
+    list.innerHTML = "";
+    if (!presetState.items.length) {
+      empty.hidden = false;
+      return;
+    }
+    empty.hidden = true;
+    for (const p of presetState.items) {
+      const node = tpl.content.firstElementChild.cloneNode(true);
+      node.dataset.id = p.id;
+      node.querySelector('[data-slot="name"]').textContent = p.name;
+      const isDefault = p.id === presetState.defaultId;
+      const badge = node.querySelector('[data-slot="default-badge"]');
+      badge.hidden = !isDefault;
+      if (isDefault) node.classList.add("is-default");
+      const setDefaultBtn = node.querySelector('[data-action="set-default"]');
+      setDefaultBtn.textContent = isDefault ? "remover padrão" : "tornar padrão";
+      node.querySelector('[data-slot="preview"]').textContent = preview(p.systemPrompt);
+      list.appendChild(node);
+    }
+  }
+
+  function showFormError(msg) {
+    errBox.textContent = msg;
+    errBox.hidden = false;
+  }
+  function clearFormError() {
+    errBox.hidden = true;
+    errBox.textContent = "";
+  }
+
+  function updateCounter() {
+    const n = promptTa.value.length;
+    counter.textContent = `${n} / 4000`;
+    counter.classList.toggle("is-over", n >= 4000);
+  }
+
+  function openForm(preset) {
+    presetState.editingId = preset?.id || null;
+    nameInput.value = preset?.name || "";
+    promptTa.value = preset?.systemPrompt || presetState.template || "";
+    updateCounter();
+    clearFormError();
+    form.hidden = false;
+    btnAdd.hidden = true;
+    nameInput.focus();
+  }
+
+  function closeForm() {
+    form.hidden = true;
+    btnAdd.hidden = false;
+    presetState.editingId = null;
+    nameInput.value = "";
+    promptTa.value = "";
+    clearFormError();
+  }
+
+  async function loadPresets() {
+    try {
+      const r = await endpoints.listImprovePresets();
+      presetState.items = r.items || [];
+      presetState.template = r.template || "";
+      presetState.defaultId = r.defaultId || null;
+      renderList();
+    } catch (err) {
+      handleErr(err, "Falha ao carregar presets");
+    }
+  }
+
+  async function handleSave() {
+    const name = nameInput.value.trim();
+    const systemPrompt = promptTa.value.trim();
+    if (!name) {
+      showFormError("Informe um nome.");
+      return;
+    }
+    if (!systemPrompt) {
+      showFormError("System prompt vazio.");
+      return;
+    }
+    btnSave.disabled = true;
+    const original = btnSave.textContent;
+    btnSave.textContent = "Salvando…";
+    try {
+      let saved;
+      if (presetState.editingId) {
+        saved = await endpoints.updateImprovePreset(presetState.editingId, { name, systemPrompt });
+        presetState.items = presetState.items.map((p) => (p.id === saved.id ? saved : p));
+      } else {
+        saved = await endpoints.createImprovePreset({ name, systemPrompt });
+        presetState.items = [saved, ...presetState.items];
+      }
+      // Reordena por updatedAt desc — mesma regra do servidor.
+      presetState.items.sort((a, b) => b.updatedAt - a.updatedAt);
+      renderList();
+      closeForm();
+      showToast("Preset salvo", "ok");
+    } catch (err) {
+      btnSave.disabled = false;
+      btnSave.textContent = original;
+      const msg = err instanceof ApiError ? err.message : "Falha ao salvar";
+      showFormError(msg);
+    }
+  }
+
+  async function handleDelete(id, name) {
+    if (!confirm(`Remover preset "${name}"?`)) return;
+    try {
+      await endpoints.deleteImprovePreset(id);
+      presetState.items = presetState.items.filter((p) => p.id !== id);
+      // FK SetNull no servidor já zerou o default se era esse — refletir local.
+      if (presetState.defaultId === id) presetState.defaultId = null;
+      renderList();
+      showToast(`"${name}" removido`);
+    } catch (err) {
+      handleErr(err, "Falha ao remover preset");
+    }
+  }
+
+  async function handleSetDefault(id) {
+    // Toggle: clicar no que já é default = remove default (manda null).
+    const next = presetState.defaultId === id ? null : id;
+    try {
+      await endpoints.setDefaultImprovePreset(next);
+      presetState.defaultId = next;
+      renderList();
+      showToast(next ? "Default atualizado" : "Default removido");
+    } catch (err) {
+      handleErr(err, "Falha ao atualizar default");
+    }
+  }
+
+  // Events
+  btnAdd.addEventListener("click", () => openForm(null));
+  btnCancel.addEventListener("click", closeForm);
+  btnRestore.addEventListener("click", () => {
+    promptTa.value = presetState.template || "";
+    updateCounter();
+    promptTa.focus();
+  });
+  promptTa.addEventListener("input", updateCounter);
+  form.addEventListener("submit", (ev) => {
+    ev.preventDefault();
+    handleSave();
+  });
+  // Escape no form fecha (se nada estava sendo digitado intensivamente)
+  form.addEventListener("keydown", (ev) => {
+    if (ev.key === "Escape") {
+      ev.preventDefault();
+      closeForm();
+    }
+  });
+
+  list.addEventListener("click", (ev) => {
+    const btn = ev.target.closest("[data-action]");
+    if (!btn) return;
+    const row = btn.closest(".preset-row");
+    if (!row) return;
+    const id = row.dataset.id;
+    const preset = presetState.items.find((p) => p.id === id);
+    if (!preset) return;
+    const action = btn.dataset.action;
+    if (action === "edit") openForm(preset);
+    else if (action === "remove") handleDelete(id, preset.name);
+    else if (action === "set-default") handleSetDefault(id);
+  });
+
+  loadPresets();
 })();
