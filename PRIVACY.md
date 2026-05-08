@@ -1,6 +1,6 @@
 # Política de Privacidade — Manager-Prompts
 
-_Última atualização: 2026-05-07._
+_Última atualização: 07-05-2026._
 
 Esta política explica quais dados o Manager-Prompts coleta, por quanto tempo retém e como você pode exercer seus direitos sob a LGPD (Lei Geral de Proteção de Dados, Lei 13.709/2018) e regulamentos equivalentes.
 
