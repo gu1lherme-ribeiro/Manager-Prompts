@@ -168,10 +168,18 @@ function buildHtml({
 
         <table role="presentation" class="wrap" width="560" cellpadding="0" cellspacing="0" border="0" bgcolor="${CARD}" style="width:560px;max-width:560px;background:${CARD};border:1px solid ${RULE};border-radius:8px;">
 
-          <!-- Header — wordmark -->
+          <!-- Header — wordmark. Indicador via sub-tabela (atributos
+               width/height/bgcolor) porque Outlook Desktop ignora width/height/
+               background em <span>. Espelhado em passwordReset.js. -->
           <tr>
-            <td class="pad-x" style="padding:22px 36px;border-bottom:1px solid ${RULE};font-family:${MONO};font-size:14px;font-weight:700;color:${INK_1};line-height:1;">
-              <span style="display:inline-block;width:3px;height:14px;background:${ACCENT};vertical-align:-2px;margin-right:10px;"></span>manager<span style="color:${ACCENT};">-</span>prompts
+            <td class="pad-x" style="padding:22px 36px;border-bottom:1px solid ${RULE};">
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;">
+                <tr>
+                  <td width="3" height="14" bgcolor="${ACCENT}" style="width:3px;background:${ACCENT};font-size:1px;line-height:14px;mso-line-height-rule:exactly;vertical-align:middle;">&nbsp;</td>
+                  <td width="10" style="width:10px;font-size:1px;line-height:14px;vertical-align:middle;">&nbsp;</td>
+                  <td style="font-family:${MONO};font-size:14px;font-weight:700;color:${INK_1};line-height:1;white-space:nowrap;vertical-align:middle;">manager<span style="color:${ACCENT};">-</span>prompts</td>
+                </tr>
+              </table>
             </td>
           </tr>
 
@@ -182,7 +190,7 @@ function buildHtml({
                 <span style="color:${ACCENT};">$</span> auth.mfa
               </p>
               <h1 class="h1-mobile" style="margin:0 0 18px 0;font-family:${MONO};font-size:28px;line-height:1.18;font-weight:700;color:${INK_1};letter-spacing:-0.015em;">
-                verificação em dois passos
+                verificação em duas etapas
               </h1>
               <p style="margin:0;font-family:${SANS};font-size:15px;line-height:1.6;color:${INK_2};">
                 ${greetingLine}

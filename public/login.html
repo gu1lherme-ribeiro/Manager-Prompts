@@ -10,7 +10,7 @@
     <meta name="theme-color" content="oklch(22% 0.012 250)" media="(prefers-color-scheme: dark)" />
     <meta name="theme-color" content="oklch(94% 0.008 250)" media="(prefers-color-scheme: light)" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg?v=3" sizes="any" />
-    <link rel="stylesheet" href="/static/css/style.css?v=20260508b" />
+    <link rel="stylesheet" href="/static/css/style.css?v=20260508c" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -273,11 +273,21 @@
             </form>
 
             <div class="auth-mfa-actions">
-              <button type="button" class="auth-link-inline" id="auth-mfa-resend" disabled>
+              <button
+                type="button"
+                class="auth-mfa-action"
+                id="auth-mfa-resend"
+                data-icon="↻"
+                disabled
+              >
                 Reenviar código (00:60)
               </button>
-              <span class="auth-mfa-actions-sep" aria-hidden="true">·</span>
-              <button type="button" class="auth-link-inline" id="auth-mfa-back">
+              <button
+                type="button"
+                class="auth-mfa-action"
+                id="auth-mfa-back"
+                data-icon="←"
+              >
                 Voltar
               </button>
             </div>
@@ -286,6 +296,6 @@
       </section>
     </main>
 
-    <script type="module" src="/static/js/auth.js?v=20260508b"></script>
+    <script type="module" src="/static/js/auth.js?v=20260508c"></script>
   </body>
 </html>

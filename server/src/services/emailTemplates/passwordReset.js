@@ -128,6 +128,13 @@ function buildHtml({
   const preheaderStyle =
     "display:none;overflow:hidden;line-height:1px;opacity:0;max-height:0;max-width:0;mso-hide:all;";
 
+  // URL exibida com break opportunities pra Outlook Desktop quebrar tokens
+  // longos. Aplicado depois do escape pra não escapar o &#8203;.
+  const resetUrlBreakable = resetUrlDisplay.replace(
+    /(\/|\?|&amp;|=)/g,
+    "$1&#8203;",
+  );
+
   // Greeting com fallback se não houver nome.
   const greetingLine = nameDisplay
     ? `Oi, <strong style="color:${INK_1};font-weight:600;">${nameDisplay}</strong> &mdash; recebemos um pedido para redefinir a senha da conta vinculada a <strong style="color:${INK_1};font-weight:600;word-break:break-word;">${to}</strong>. Toque no botão abaixo para escolher uma senha nova.`
@@ -189,10 +196,20 @@ function buildHtml({
              ════════════════════════════════════════════════════════════ -->
         <table role="presentation" class="wrap" width="560" cellpadding="0" cellspacing="0" border="0" bgcolor="${CARD}" style="width:560px;max-width:560px;background:${CARD};border:1px solid ${RULE};border-radius:8px;">
 
-          <!-- Header — wordmark com indicador âmbar à esquerda -->
+          <!-- Header — wordmark com indicador âmbar à esquerda.
+               O indicador é uma sub-tabela com width/height/bgcolor (atributos
+               HTML, não CSS) porque Outlook Desktop ignora width/height/background
+               em <span>: span é sempre tratado como inline puro. Atributos no <td>
+               sobrevivem. -->
           <tr>
-            <td class="pad-x" style="padding:22px 36px;border-bottom:1px solid ${RULE};font-family:${MONO};font-size:14px;font-weight:700;color:${INK_1};line-height:1;">
-              <span style="display:inline-block;width:3px;height:14px;background:${ACCENT};vertical-align:-2px;margin-right:10px;"></span>manager<span style="color:${ACCENT};">-</span>prompts
+            <td class="pad-x" style="padding:22px 36px;border-bottom:1px solid ${RULE};">
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;">
+                <tr>
+                  <td width="3" height="14" bgcolor="${ACCENT}" style="width:3px;background:${ACCENT};font-size:1px;line-height:14px;mso-line-height-rule:exactly;vertical-align:middle;">&nbsp;</td>
+                  <td width="10" style="width:10px;font-size:1px;line-height:14px;vertical-align:middle;">&nbsp;</td>
+                  <td style="font-family:${MONO};font-size:14px;font-weight:700;color:${INK_1};line-height:1;white-space:nowrap;vertical-align:middle;">manager<span style="color:${ACCENT};">-</span>prompts</td>
+                </tr>
+              </table>
             </td>
           </tr>
 
@@ -285,7 +302,15 @@ function buildHtml({
           </tr>
 
           <!-- Fallback link — agora em "code block" com background próprio
-               em vez de texto solto sublinhado. -->
+               em vez de texto solto sublinhado.
+
+               URL exibida: injetamos &#8203; (zero-width space) após cada
+               separador (/ ? & =) porque Outlook Desktop ignora
+               word-break:break-all e a URL longa estoura o card de 560px,
+               criando scroll horizontal. ZWSP é universalmente respeitado
+               como break opportunity (Outlook 2007+, Apple Mail, Gmail) e
+               invisível no render. O href permanece com a URL raw — só o
+               texto exibido recebe os ZWSPs. -->
           <tr>
             <td class="pad-x" style="padding:0 36px 8px 36px;">
               <p style="margin:0 0 10px 0;font-family:${SANS};font-size:12px;font-weight:500;color:${INK_3};line-height:1.5;">
@@ -294,7 +319,7 @@ function buildHtml({
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="${SUNKEN_BG}" style="background:${SUNKEN_BG};border:1px solid ${RULE_SOFT};border-radius:4px;">
                 <tr>
                   <td style="padding:12px 14px;font-family:${MONO};font-size:12px;line-height:1.55;color:${INK_2};word-break:break-all;">
-                    <a href="${resetUrl}" style="color:${INK_2};text-decoration:none;word-break:break-all;">${resetUrlDisplay}</a>
+                    <a href="${resetUrl}" style="color:${INK_2};text-decoration:none;word-break:break-all;">${resetUrlBreakable}</a>
                   </td>
                 </tr>
               </table>

@@ -4650,24 +4650,84 @@ body.drawer-open .main {
   font-variant-numeric: tabular-nums;
 }
 
+/* MFA — ações secundárias (reenviar / voltar).
+   Pareadas como chips mono com glifo de prefixo (`data-icon`) seguindo o
+   vocabulário de terminal do app. Quietas em repouso (border + ink-3),
+   âmbar só no glifo durante hover/focus pra não competir com o CTA primário. */
 .auth-mfa-actions {
   display: flex;
-  align-items: center;
+  align-items: stretch;
   justify-content: center;
+  flex-wrap: wrap;
   gap: var(--space-xs);
+  margin-top: var(--space-md);
+  padding-top: var(--space-md);
+  border-top: 1px solid var(--rule);
+}
+
+.auth-mfa-action {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: 6px var(--space-sm);
+  background: transparent;
+  border: 1px solid var(--rule);
+  border-radius: 3px;
   font-family: var(--font-mono);
-  font-size: var(--fs-xs);
+  font-size: var(--fs-2xs);
+  letter-spacing: 0.02em;
   color: var(--ink-3);
+  cursor: pointer;
+  font-variant-numeric: tabular-nums;
+  transition: color var(--dur-fast) var(--ease-out-quart),
+    background-color var(--dur-fast) var(--ease-out-quart),
+    border-color var(--dur-fast) var(--ease-out-quart),
+    transform var(--dur-instant) var(--ease-out-quart);
 }
 
-.auth-mfa-actions-sep {
+.auth-mfa-action::before {
+  content: attr(data-icon);
   color: var(--ink-4);
-  opacity: 0.5;
+  font-size: var(--fs-xs);
+  line-height: 1;
+  transition: color var(--dur-fast) var(--ease-out-quart);
 }
 
-.auth-mfa-actions .auth-link-inline[disabled] {
-  pointer-events: none;
-  opacity: 0.5;
+.auth-mfa-action:hover,
+.auth-mfa-action:focus-visible {
+  color: var(--ink-1);
+  background: var(--bg-hover);
+  border-color: var(--rule-strong);
+  outline: none;
+}
+
+.auth-mfa-action:hover::before,
+.auth-mfa-action:focus-visible::before {
+  color: var(--accent);
+}
+
+.auth-mfa-action:active {
+  transform: translateY(1px);
+}
+
+.auth-mfa-action:disabled,
+.auth-mfa-action[disabled] {
+  cursor: not-allowed;
+  color: var(--ink-4);
+}
+
+.auth-mfa-action:disabled:hover,
+.auth-mfa-action[disabled]:hover {
+  color: var(--ink-4);
+  background: transparent;
+  border-color: var(--rule);
+  transform: none;
+}
+
+.auth-mfa-action:disabled::before,
+.auth-mfa-action[disabled]::before {
+  color: var(--ink-4);
+  opacity: 0.6;
 }
 
 /* MFA settings card -------------------------------------------------------- */

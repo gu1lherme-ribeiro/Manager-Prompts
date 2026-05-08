@@ -2,7 +2,7 @@
 // header, que EventSource (GET-only, sem headers) não suporta. Em vez disso,
 // fetch + ReadableStream + parser SSE manual.
 
-import { readCookie } from "/static/js/api.js?v=20260508b";
+import { readCookie } from "/static/js/api.js?v=20260508c";
 
 const CSRF_COOKIE = "mp_csrf";
 

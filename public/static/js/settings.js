@@ -1,5 +1,5 @@
-import { api, endpoints, ApiError } from "/static/js/api.js?v=20260508b";
-import { startIdleWatcher } from "/static/js/idle.js?v=20260508b";
+import { api, endpoints, ApiError } from "/static/js/api.js?v=20260508c";
+import { startIdleWatcher } from "/static/js/idle.js?v=20260508c";
 
 const PROVIDERS = ["anthropic", "openai", "gemini"];
 const PROVIDER_LABELS = {
@@ -328,7 +328,7 @@ async function init() {
 init();
 
 /* =========================================================================
-   MFA card — Verificação Em Dois Passos
+   MFA card — Verificação Em Duas Etapas
    ========================================================================= */
 const _$mfa = (id) => document.getElementById(id);
 

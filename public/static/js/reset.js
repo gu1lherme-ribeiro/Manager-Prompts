@@ -1,4 +1,4 @@
-import { endpoints, ApiError } from "/static/js/api.js?v=20260508b";
+import { endpoints, ApiError } from "/static/js/api.js?v=20260508c";
 
 const form = document.getElementById("reset-form");
 const reveal = document.getElementById("auth-reveal");
