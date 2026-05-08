@@ -20,9 +20,12 @@ import {
   MFA_MAX_ATTEMPTS,
 } from "../services/mfaChallenges.js";
 import {
+  createTrustedDevice,
   listTrustedDevices,
   revokeTrustedDevice,
   revokeAllTrustedDevicesForUser,
+  trustedDeviceCookieOptions,
+  TRUSTED_DEVICE_COOKIE,
 } from "../services/trustedDevices.js";
 import { renderMfaChallengeEmail } from "../services/emailTemplates/mfaChallenge.js";
 import { sendMail } from "../services/mailer.js";
@@ -205,6 +208,18 @@ router.post("/mfa/enable", requireUser, async (req, res, next) => {
         update: { enabled: true, enabledAt: now },
         create: { userId: req.user.id, enabled: true, enabledAt: now },
       });
+
+      // O usuário acabou de provar posse do email digitando o código neste
+      // dispositivo — então confiamos nele implicitamente. Sem isso, a seção
+      // "Dispositivos Confiáveis" abre vazia logo após ativar e o próximo
+      // login pediria MFA de novo no mesmo browser.
+      const td = await createTrustedDevice({
+        userId: req.user.id,
+        ip: req.ip,
+        userAgent: req.get("user-agent"),
+      });
+      res.cookie(TRUSTED_DEVICE_COOKIE, td.token, trustedDeviceCookieOptions());
+
       return res.json({ enabled: true, enabledAt: now });
     }
 
