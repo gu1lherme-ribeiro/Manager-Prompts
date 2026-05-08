@@ -1,8 +1,8 @@
-import { api, endpoints, ApiError } from "/static/js/api.js?v=20260508a";
-import { sanitizeContent } from "/static/js/sanitize.js?v=20260508a";
-import { startIdleWatcher } from "/static/js/idle.js?v=20260508a";
-import { streamImprove } from "/static/js/improve.js?v=20260508a";
-import { renderWordDiff } from "/static/js/diff.js?v=20260508a";
+import { api, endpoints, ApiError } from "/static/js/api.js?v=20260508b";
+import { sanitizeContent } from "/static/js/sanitize.js?v=20260508b";
+import { startIdleWatcher } from "/static/js/idle.js?v=20260508b";
+import { streamImprove } from "/static/js/improve.js?v=20260508b";
+import { renderWordDiff } from "/static/js/diff.js?v=20260508b";
 
 const THEME_KEY = "prompts_theme";
 const LEGACY_STORAGE_KEY = "prompts_storage";

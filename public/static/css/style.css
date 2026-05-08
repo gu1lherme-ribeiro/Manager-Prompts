@@ -5008,3 +5008,52 @@ body.drawer-open .main {
   border-radius: 3px;
   color: var(--ink-1);
 }
+
+/* Quebra segura pra e-mails, URLs e códigos longos. Sem isso o link
+   guilherme.fernandes.dev27@gmail.com força scroll horizontal em ~360px. */
+.privacy-section p,
+.privacy-section li,
+.privacy-meta,
+.privacy-section .settings-link,
+.privacy-section code {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+@media (max-width: 720px) {
+  .privacy-section {
+    margin-bottom: var(--space-md);
+  }
+  .privacy-list {
+    padding-left: var(--space-md);
+  }
+  .privacy-subhead {
+    margin-top: var(--space-sm);
+  }
+  .privacy .settings-section-title {
+    margin-top: var(--space-sm);
+    line-height: 1.45;
+  }
+}
+
+@media (max-width: 480px) {
+  .privacy-section p,
+  .privacy-list {
+    font-size: var(--fs-sm);
+    line-height: 1.5;
+  }
+  .privacy-list {
+    padding-left: 1.1rem;
+  }
+  .privacy-list li {
+    margin-bottom: var(--space-xs);
+  }
+  .privacy-subhead {
+    font-size: var(--fs-xs);
+  }
+  .privacy-list code,
+  .privacy-section code {
+    font-size: 0.88em;
+    padding: 1px 4px;
+  }
+}
