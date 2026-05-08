@@ -6,7 +6,7 @@ Esta política explica quais dados o Manager-Prompts coleta, por quanto tempo re
 
 ## 1. Quem é o controlador
 
-O controlador é o operador da instância onde você criou sua conta. Para a instância oficial, o contato é o e-mail listado no rodapé do repositório no GitHub.
+O controlador é o operador da instância onde você criou sua conta. Para a instância oficial, o contato é **guilherme.fernandes.dev27@gmail.com**.
 
 Se você está rodando uma instância própria (auto-hospedada), o controlador é você mesmo — esta política descreve como o software trata os dados, mas a operação fica sob sua responsabilidade.
 
@@ -99,7 +99,7 @@ Esses provedores recebem e processam esse conteúdo conforme as próprias polít
 - **Acesso**: você pode visualizar todos os seus prompts, projetos e presets em `/`.
 - **Correção**: edite os dados pela interface.
 - **Anonimização ou exclusão**: use **"Deletar conta"** em `/settings`.
-- **Portabilidade**: exportação estruturada em formato JSON está no roadmap. Por enquanto, peça por e-mail.
+- **Portabilidade**: exportação estruturada em formato JSON está no roadmap. Enquanto isso, peça em **guilherme.fernandes.dev27@gmail.com**.
 - **Revogação de consentimento**: ao deletar a conta, todo consentimento é revogado.
 - **Reclamação à ANPD**: você sempre pode reclamar à autoridade brasileira de proteção de dados.
 
