@@ -340,6 +340,9 @@ const OAUTH_ERRORS = {
 const REASON_MESSAGES = {
   idle: "Sua sessão expirou por inatividade. Entre novamente.",
 };
+const FLAG_MESSAGES = {
+  deleted: "Conta deletada. Você pode criar uma nova quando quiser.",
+};
 
 (function () {
   const params = new URLSearchParams(window.location.search);
@@ -351,6 +354,11 @@ const REASON_MESSAGES = {
   } else if (reason && REASON_MESSAGES[reason]) {
     showError(REASON_MESSAGES[reason]);
     params.delete("reason");
+  } else if (params.get("deleted") === "1") {
+    // Mensagem informativa após auto-exclusão de conta — não é erro mas usa
+    // o mesmo slot visual.
+    showError(FLAG_MESSAGES.deleted);
+    params.delete("deleted");
   }
   const rest = params.toString();
   const cleanUrl =

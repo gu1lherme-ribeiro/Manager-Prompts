@@ -4915,3 +4915,96 @@ body.drawer-open .main {
 .presets-form-actions-spacer {
   flex: 1;
 }
+
+/* =========================================================================
+   Aviso de privacidade no /settings + variantes danger.
+   ========================================================================= */
+
+.settings-hint--warn {
+  border-left: 2px solid var(--accent);
+  padding-left: var(--space-sm);
+  background: color-mix(in oklch, var(--accent) 6%, transparent);
+  border-radius: 0 3px 3px 0;
+  padding-top: var(--space-xs);
+  padding-bottom: var(--space-xs);
+}
+.settings-hint--warn strong {
+  color: var(--accent);
+}
+
+.settings-link {
+  color: var(--accent);
+  text-decoration: none;
+}
+.settings-link:hover {
+  text-decoration: underline;
+}
+
+/* Botão danger — usado pra deletar conta. Não substitui as classes utilitárias
+   .btn-ghost / .btn-primary; agrega cor de alerta sem virar default visual. */
+.btn-danger {
+  color: var(--danger);
+  border-color: color-mix(in oklch, var(--danger) 30%, var(--rule)) !important;
+}
+.btn-danger:hover {
+  background: color-mix(in oklch, var(--danger) 8%, transparent);
+  border-color: var(--danger) !important;
+}
+.btn-primary.btn-danger {
+  /* Confirmar deleção dentro do step inert: virar primary "perigoso" — fundo
+     vermelho, foreground claro. */
+  background: var(--danger);
+  border-color: var(--danger) !important;
+  color: oklch(98% 0.005 250);
+}
+.btn-primary.btn-danger:hover {
+  background: color-mix(in oklch, var(--danger) 88%, oklch(0% 0 0));
+}
+
+/* =========================================================================
+   /privacy — política de privacidade. Reaproveita .settings-* mas com
+   espaçamento mais leitor-friendly e listas sem bullet exótico.
+   ========================================================================= */
+.privacy .settings-section-title {
+  margin-top: var(--space-md);
+}
+.privacy-meta {
+  margin-top: calc(-1 * var(--space-sm));
+  margin-bottom: var(--space-md);
+  color: var(--ink-3);
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+}
+.privacy-section {
+  margin-bottom: var(--space-lg);
+}
+.privacy-section p {
+  margin: 0 0 var(--space-sm);
+  color: var(--ink-2);
+  line-height: 1.55;
+}
+.privacy-subhead {
+  margin: var(--space-md) 0 var(--space-xs);
+  font-family: var(--font-mono);
+  font-size: var(--fs-sm);
+  color: var(--ink-1);
+  font-weight: 500;
+}
+.privacy-list {
+  margin: 0 0 var(--space-sm);
+  padding-left: var(--space-lg);
+  color: var(--ink-2);
+  line-height: 1.55;
+}
+.privacy-list li {
+  margin-bottom: var(--space-2xs);
+}
+.privacy-list code,
+.privacy-section code {
+  font-family: var(--font-mono);
+  font-size: 0.92em;
+  background: var(--bg-sunk);
+  padding: 1px 5px;
+  border-radius: 3px;
+  color: var(--ink-1);
+}

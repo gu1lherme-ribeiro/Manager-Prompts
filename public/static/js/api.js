@@ -56,7 +56,7 @@ export const api = {
   post: (p, body) => req("POST", p, body),
   patch: (p, body) => req("PATCH", p, body),
   put: (p, body) => req("PUT", p, body),
-  delete: (p) => req("DELETE", p),
+  delete: (p, body) => req("DELETE", p, body),
 };
 
 export const endpoints = {
@@ -64,6 +64,8 @@ export const endpoints = {
   register: (body) => api.post("/api/auth/register", body),
   login: (body) => api.post("/api/auth/login", body),
   logout: () => api.post("/api/auth/logout"),
+  deleteAccount: (password) =>
+    api.delete("/api/auth/me", password ? { password } : undefined),
   forgotPassword: (body) => api.post("/api/auth/forgot", body),
   resetPassword: (body) => api.post("/api/auth/reset", body),
 

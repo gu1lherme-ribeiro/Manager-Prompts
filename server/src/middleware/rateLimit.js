@@ -29,3 +29,19 @@ export const improveLimiter = rateLimit({
     },
   },
 });
+
+// Anti-scraping/enumeração em GETs autenticados (listagens, detalhes).
+// Limite generoso (não atrapalha uso normal) mas bloqueia bot.
+export const readLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: env.RATE_LIMIT_READ_MAX,
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => req.user?.id || req.ip,
+  message: {
+    error: {
+      code: "rate_limited",
+      message: "muitas requisições — aguarde alguns segundos",
+    },
+  },
+});

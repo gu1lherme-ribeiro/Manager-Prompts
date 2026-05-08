@@ -222,6 +222,56 @@ function bindAccountEvents() {
     }
     window.location.href = "/login";
   });
+
+  // Auto-exclusão de conta (LGPD). Padrão segue o card MFA: revela um step
+  // inert escondido, foca na senha, submit chama DELETE /api/auth/me.
+  // User só Google (sem hasPassword): esconde campo de senha.
+  const btnDelete  = document.getElementById("btn-delete-account");
+  const step       = document.getElementById("delete-account-step");
+  const form       = document.getElementById("delete-account-form");
+  const pwdField   = document.getElementById("delete-account-pwd-field");
+  const pwdInput   = document.getElementById("delete-account-pwd");
+  const errBox     = document.getElementById("delete-account-error");
+  const cancelBtn  = document.getElementById("delete-account-cancel");
+  if (!btnDelete) return;
+
+  function showStep(on) {
+    step.dataset.shown = on ? "true" : "false";
+    if (on) step.removeAttribute("inert");
+    else step.setAttribute("inert", "");
+  }
+
+  btnDelete.addEventListener("click", () => {
+    const hasPassword = !!state.user?.hasPassword;
+    pwdField.hidden = !hasPassword;
+    pwdInput.required = hasPassword;
+    pwdInput.value = "";
+    errBox.hidden = true;
+    showStep(true);
+    if (hasPassword) pwdInput.focus();
+  });
+
+  cancelBtn.addEventListener("click", () => {
+    showStep(false);
+    pwdInput.value = "";
+    errBox.hidden = true;
+  });
+
+  form.addEventListener("submit", async (ev) => {
+    ev.preventDefault();
+    errBox.hidden = true;
+    const password = state.user?.hasPassword ? pwdInput.value : undefined;
+    try {
+      await endpoints.deleteAccount(password);
+      // Sucesso → toda a sessão foi limpa server-side. Redireciona com flag pra
+      // mostrar feedback na tela de login.
+      window.location.href = "/login?deleted=1";
+    } catch (err) {
+      const msg = err instanceof ApiError ? err.message : "Falha ao deletar conta";
+      errBox.textContent = msg;
+      errBox.hidden = false;
+    }
+  });
 }
 
 function handleErr(err, fallback) {

@@ -2,6 +2,7 @@ import { Router } from "express";
 import { z } from "zod";
 import prisma from "../db/prisma.js";
 import { requireUser } from "../middleware/auth.js";
+import { readLimiter } from "../middleware/rateLimit.js";
 import { newPromptId } from "../utils/id.js";
 import {
   sanitizePromptContent,
@@ -110,7 +111,7 @@ async function resolveProjectForUser(userId, raw) {
 
 router.use(requireUser);
 
-router.get("/", async (req, res, next) => {
+router.get("/", readLimiter, async (req, res, next) => {
   try {
     const { search, limit, projectId } = listQuerySchema.parse(req.query);
     const where = {
@@ -138,7 +139,7 @@ router.get("/", async (req, res, next) => {
   }
 });
 
-router.get("/:id", async (req, res, next) => {
+router.get("/:id", readLimiter, async (req, res, next) => {
   try {
     const prompt = await prisma.prompt.findFirst({
       where: { id: req.params.id, userId: req.user.id },

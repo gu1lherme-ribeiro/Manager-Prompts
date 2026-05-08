@@ -96,6 +96,7 @@ export const env = {
   GEMINI_MODEL: optional("GEMINI_MODEL", "gemini-2.0-flash"),
   RATE_LIMIT_AUTH_MAX: Number(optional("RATE_LIMIT_AUTH_MAX", "10")),
   RATE_LIMIT_IMPROVE_MAX: Number(optional("RATE_LIMIT_IMPROVE_MAX", "20")),
+  RATE_LIMIT_READ_MAX: Number(optional("RATE_LIMIT_READ_MAX", "100")),
 
   // Timeout de ociosidade da sessão (em minutos). 0 desliga a checagem.
   SESSION_IDLE_TIMEOUT_MIN: Number(optional("SESSION_IDLE_TIMEOUT_MIN", "30")),

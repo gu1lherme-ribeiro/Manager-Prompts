@@ -2,6 +2,7 @@ import { Router } from "express";
 import { z } from "zod";
 import { Prisma } from "@prisma/client";
 import { requireUser } from "../middleware/auth.js";
+import { readLimiter } from "../middleware/rateLimit.js";
 import {
   listForUser,
   createForUser,
@@ -46,7 +47,7 @@ const patchSchema = z
 
 router.use(requireUser);
 
-router.get("/", async (req, res, next) => {
+router.get("/", readLimiter, async (req, res, next) => {
   try {
     const presets = await listForUser(req.user.id);
     const me = await prisma.user.findUnique({

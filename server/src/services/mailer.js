@@ -38,6 +38,12 @@ function fromAddress() {
  */
 export async function sendMail({ to, subject, html, text, replyTo }) {
   if (!isConfigured()) {
+    // Em prod, recusar despejar token em log. Caller já trata erro
+    // fire-and-forget — o que sobe pro log é só "[…] sendMail crashed: SMTP_NOT_CONFIGURED",
+    // sem `text` em claro.
+    if (env.isProd) {
+      throw new Error("SMTP_NOT_CONFIGURED");
+    }
     if (!warnedMissingConfig) {
       console.warn(
         "[mailer] SMTP não configurado (SMTP_HOST/SMTP_FROM ausentes) — emails cairão em stdout.",

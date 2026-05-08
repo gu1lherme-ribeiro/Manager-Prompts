@@ -57,8 +57,35 @@
             <dd class="settings-kv-val" id="account-password">—</dd>
           </div>
         </dl>
+        <p class="settings-hint settings-hint--warn">
+          <strong>// privacidade</strong> — seus prompts, projetos e presets ficam armazenados em texto legível no banco.
+          Não inclua senhas, tokens ou dados de terceiros nos prompts.
+          Detalhes em <a class="settings-link" href="/privacy">política de privacidade</a>.
+        </p>
+
         <div class="settings-actions">
           <button type="button" class="btn-ghost" id="btn-logout-settings">Sair</button>
+          <button type="button" class="btn-ghost btn-danger" id="btn-delete-account">Deletar conta</button>
+        </div>
+
+        <div class="settings-mfa-step" id="delete-account-step" data-shown="false" inert>
+          <p class="settings-hint">
+            <strong>Atenção:</strong> deleta permanentemente sua conta, prompts, projetos, presets, chaves e dispositivos confiáveis. Não pode ser desfeito.
+          </p>
+          <form class="settings-mfa-form" id="delete-account-form">
+            <div class="auth-field" id="delete-account-pwd-field">
+              <label class="auth-label" for="delete-account-pwd">Senha</label>
+              <div class="auth-input-wrap">
+                <span class="auth-input-prefix" aria-hidden="true">→</span>
+                <input type="password" id="delete-account-pwd" class="auth-input" autocomplete="current-password" />
+              </div>
+            </div>
+            <p class="auth-error" id="delete-account-error" hidden></p>
+            <div class="settings-mfa-form-actions">
+              <button type="submit" class="btn-primary btn-danger">Confirmar deleção</button>
+              <button type="button" class="btn-ghost" id="delete-account-cancel">Cancelar</button>
+            </div>
+          </form>
         </div>
       </section>
 

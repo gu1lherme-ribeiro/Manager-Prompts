@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+    />
+    <meta name="color-scheme" content="dark light" />
+    <meta name="theme-color" content="oklch(18% 0.011 250)" media="(prefers-color-scheme: dark)" />
+    <meta name="theme-color" content="oklch(97% 0.005 250)" media="(prefers-color-scheme: light)" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg?v=3" sizes="any" />
+    <link rel="stylesheet" href="/static/css/style.css?v=20260508a" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Red+Hat+Mono:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap"
+      rel="stylesheet"
+    />
+    <title>Política de Privacidade · Manager-Prompts</title>
+    <script src="/static/js/theme-boot.js"></script>
+  </head>
+  <body class="settings-body">
+    <main class="settings privacy" aria-labelledby="privacy-title">
+      <header class="settings-head">
+        <a class="settings-back" href="/" aria-label="Voltar ao app">
+          <span class="settings-back-caret" aria-hidden="true">❯</span>
+          <span>Voltar</span>
+        </a>
+        <p class="main-status settings-status">
+          <span class="main-status-prefix" aria-hidden="true">$</span>
+          <span class="main-status-text">Política de Privacidade</span>
+        </p>
+      </header>
+
+      <h1 id="privacy-title" class="settings-title">Política de Privacidade</h1>
+      <p class="privacy-meta"><em>Última atualização: 2026-05-07.</em></p>
+
+      <section class="privacy-section">
+        <p>
+          Esta política explica quais dados o Manager-Prompts coleta, por quanto tempo retém e como você pode exercer seus direitos sob a LGPD (Lei 13.709/2018).
+        </p>
+      </section>
+
+      <section class="privacy-section">
+        <h2 class="settings-section-title">
+          <span class="settings-section-prefix" aria-hidden="true">//</span> 1. Quem É O Controlador
+        </h2>
+        <p>
+          O controlador é o operador da instância onde você criou sua conta. Para a instância oficial, o contato é o e-mail listado no rodapé do repositório no GitHub. Se você está rodando uma instância própria (auto-hospedada), o controlador é você mesmo.
+        </p>
+      </section>
+
+      <section class="privacy-section">
+        <h2 class="settings-section-title">
+          <span class="settings-section-prefix" aria-hidden="true">//</span> 2. Dados Coletados
+        </h2>
+        <h3 class="privacy-subhead">Conta</h3>
+        <ul class="privacy-list">
+          <li><strong>E-mail</strong> — identifica você e recebe avisos de segurança.</li>
+          <li><strong>Nome e sobrenome</strong> — exibidos na interface.</li>
+          <li><strong>Hash da senha</strong> — armazenado com Argon2id. Senha em texto puro <strong>nunca</strong> é guardada.</li>
+          <li><strong>Identificador Google</strong> — opcional, criado se você fizer login com Google.</li>
+        </ul>
+
+        <h3 class="privacy-subhead">Conteúdo gerado por você</h3>
+        <ul class="privacy-list">
+          <li>Prompts (título e conteúdo)</li>
+          <li>Projetos (nome)</li>
+          <li>Presets de improve (nome e <em>system prompt</em> customizado)</li>
+        </ul>
+        <p class="settings-hint settings-hint--warn">
+          <strong>Importante:</strong> prompts e presets ficam em texto legível no banco. Não inclua senhas, tokens, dados financeiros, dados de saúde, ou informações pessoais de terceiros nos prompts.
+        </p>
+
+        <h3 class="privacy-subhead">Chaves de API (BYOK)</h3>
+        <p>
+          Se você cadastrar chaves dos provedores (Anthropic / OpenAI / Google Gemini) em <code>/settings</code>, elas são <strong>criptografadas com AES-256-GCM</strong> antes de irem ao banco. A chave em texto puro só existe na memória do servidor durante a chamada ao provedor e é zerada imediatamente depois.
+        </p>
+
+        <h3 class="privacy-subhead">Operacionais</h3>
+        <ul class="privacy-list">
+          <li>Endereço IP e user-agent registrados em sessões, desafios MFA e dispositivos confiáveis</li>
+          <li>Timestamps de criação, último uso e expiração</li>
+        </ul>
+      </section>
+
+      <section class="privacy-section">
+        <h2 class="settings-section-title">
+          <span class="settings-section-prefix" aria-hidden="true">//</span> 3. Por Quanto Tempo
+        </h2>
+        <ul class="privacy-list">
+          <li><strong>Conta + conteúdo</strong> (prompts, projetos, presets, chaves): até você deletar a conta</li>
+          <li><strong>Sessão curta</strong>: 24h ou 30 min de inatividade</li>
+          <li><strong>Sessão "manter conectado"</strong>: 30 dias ou 30 min de inatividade</li>
+          <li><strong>Desafios MFA</strong>: 5 minutos</li>
+          <li><strong>Dispositivos confiáveis</strong>: 30 dias</li>
+          <li><strong>Tokens de redefinição de senha</strong>: 30 minutos</li>
+        </ul>
+      </section>
+
+      <section class="privacy-section">
+        <h2 class="settings-section-title">
+          <span class="settings-section-prefix" aria-hidden="true">//</span> 4. Como Deletar Sua Conta
+        </h2>
+        <p>
+          Vá em <a class="settings-link" href="/settings">/settings</a> → <strong>"Deletar conta"</strong>. A operação apaga em cascata: usuário, prompts, projetos, presets, chaves, sessões, MFA, tokens pendentes e dispositivos confiáveis. <strong>Não há recuperação.</strong> Backups operacionais podem reter cópias por até 30 dias.
+        </p>
+      </section>
+
+      <section class="privacy-section">
+        <h2 class="settings-section-title">
+          <span class="settings-section-prefix" aria-hidden="true">//</span> 5. Compartilhamento Com Terceiros
+        </h2>
+        <h3 class="privacy-subhead">Provedores de IA</h3>
+        <p>
+          Quando você clica em <strong>melhorar</strong>, o conteúdo do prompt é enviado para o provedor escolhido (Anthropic, OpenAI ou Google Gemini), junto com o <em>system prompt</em> ativo e a instrução opcional. Esses provedores processam o conteúdo conforme as próprias políticas — verifique direto:
+        </p>
+        <ul class="privacy-list">
+          <li><a class="settings-link" href="https://www.anthropic.com/privacy" rel="noopener">Anthropic Privacy Policy</a></li>
+          <li><a class="settings-link" href="https://openai.com/privacy" rel="noopener">OpenAI Privacy Policy</a></li>
+          <li><a class="settings-link" href="https://ai.google.dev/terms" rel="noopener">Google Gemini API Terms</a></li>
+        </ul>
+
+        <h3 class="privacy-subhead">Outros</h3>
+        <ul class="privacy-list">
+          <li><strong>Google OAuth</strong> (se você usa "entrar com Google"): a Google recebe que você fez login.</li>
+          <li><strong>CDN de fontes e DOMPurify</strong> (Google Fonts, jsDelivr): servem apenas assets estáticos. Não enviamos dados pessoais.</li>
+        </ul>
+      </section>
+
+      <section class="privacy-section">
+        <h2 class="settings-section-title">
+          <span class="settings-section-prefix" aria-hidden="true">//</span> 6. Segurança
+        </h2>
+        <ul class="privacy-list">
+          <li>Senhas: Argon2id (parâmetros OWASP 2024)</li>
+          <li>Chaves BYOK: AES-256-GCM com AAD por usuário</li>
+          <li>Sessões e tokens de reset/MFA/dispositivo: hashes (SHA-256 ou HMAC-SHA-256), nunca em claro</li>
+          <li>CSRF: double-submit em todas as rotas mutantes</li>
+          <li>HTTPS obrigatório em produção (HSTS 6 meses, cookies <code>secure</code>)</li>
+          <li>CSP restritiva, sem <code>unsafe-eval</code></li>
+        </ul>
+      </section>
+
+      <section class="privacy-section">
+        <h2 class="settings-section-title">
+          <span class="settings-section-prefix" aria-hidden="true">//</span> 7. Seus Direitos LGPD
+        </h2>
+        <ul class="privacy-list">
+          <li><strong>Acesso</strong>: visualize todos os seus dados em <code>/</code></li>
+          <li><strong>Correção</strong>: edite pela interface</li>
+          <li><strong>Anonimização ou exclusão</strong>: <a class="settings-link" href="/settings">"Deletar conta"</a></li>
+          <li><strong>Portabilidade</strong>: exportação JSON está no roadmap; enquanto isso, peça por e-mail</li>
+          <li><strong>Revogação de consentimento</strong>: ao deletar a conta, todo consentimento é revogado</li>
+          <li><strong>Reclamação à ANPD</strong>: sempre disponível</li>
+        </ul>
+      </section>
+
+      <section class="privacy-section">
+        <h2 class="settings-section-title">
+          <span class="settings-section-prefix" aria-hidden="true">//</span> 8. Cookies
+        </h2>
+        <p>Todos essenciais ao funcionamento. Sem analytics, publicidade ou tracking.</p>
+        <ul class="privacy-list">
+          <li><code>mp_sid</code> — sessão (httpOnly, secure) — 24h ou 30d</li>
+          <li><code>mp_csrf</code> — token CSRF — sessão do navegador</li>
+          <li><code>mp_td</code> — dispositivo confiável MFA — 30d</li>
+          <li><code>mp_oauth_state</code>, <code>mp_oauth_verifier</code> — fluxo OAuth Google — 10 min</li>
+        </ul>
+      </section>
+
+      <section class="privacy-section">
+        <h2 class="settings-section-title">
+          <span class="settings-section-prefix" aria-hidden="true">//</span> 9. Mudanças
+        </h2>
+        <p>
+          Atualizações importantes são comunicadas pelo e-mail cadastrado. A data no topo deste documento indica a última revisão.
+        </p>
+      </section>
+    </main>
+  </body>
+</html>

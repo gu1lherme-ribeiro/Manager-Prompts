@@ -2,6 +2,7 @@ import { Router } from "express";
 import { z } from "zod";
 import prisma from "../db/prisma.js";
 import { requireUser } from "../middleware/auth.js";
+import { readLimiter } from "../middleware/rateLimit.js";
 import {
   VALID_PROVIDERS,
   isValidProvider,
@@ -39,7 +40,7 @@ function providerGuard(req, res, next) {
   next();
 }
 
-router.get("/api-keys", async (req, res, next) => {
+router.get("/api-keys", readLimiter, async (req, res, next) => {
   try {
     res.json(await listApiKeyStatus(req.user.id));
   } catch (err) {
@@ -154,7 +155,7 @@ router.patch("/default-improve-preset", async (req, res, next) => {
 
 // MFA settings -------------------------------------------------------------
 
-router.get("/mfa", requireUser, async (req, res, next) => {
+router.get("/mfa", requireUser, readLimiter, async (req, res, next) => {
   try {
     const settings = await prisma.mfaSettings.findUnique({ where: { userId: req.user.id } });
     const devices = await listTrustedDevices(req.user.id);

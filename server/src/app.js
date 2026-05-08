@@ -104,6 +104,7 @@ export function createApp() {
   app.get("/login", redirectIfAuthed("login.html"));
   app.get("/forgot", sendHtml("forgot.html"));
   app.get("/reset", sendHtml("reset.html"));
+  app.get("/privacy", sendHtml("privacy.html"));
 
   app.use((req, res) => {
     if (req.path.startsWith("/api/")) {
@@ -114,9 +115,20 @@ export function createApp() {
   });
 
   // eslint-disable-next-line no-unused-vars
-  app.use((err, _req, res, _next) => {
+  app.use((err, req, res, _next) => {
     const status = err.status || 500;
-    console.error("[error]", err);
+    // Em prod, evita despejar stack/path absoluto/lib internals em log
+    // (reconnaissance pra atacante). Em dev mantém full pra DX.
+    const logPayload = env.isProd
+      ? {
+          code: err.code || "internal_error",
+          message: err.message,
+          path: req.path,
+          method: req.method,
+          status,
+        }
+      : err;
+    console.error("[error]", logPayload);
     res.status(status).json({
       error: {
         code: err.code || "internal_error",

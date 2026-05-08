@@ -3,6 +3,7 @@ import { z } from "zod";
 import { Prisma } from "@prisma/client";
 import prisma from "../db/prisma.js";
 import { requireUser } from "../middleware/auth.js";
+import { readLimiter } from "../middleware/rateLimit.js";
 
 const router = Router();
 
@@ -42,7 +43,7 @@ function serialize(project, promptCount = 0) {
 
 router.use(requireUser);
 
-router.get("/", async (req, res, next) => {
+router.get("/", readLimiter, async (req, res, next) => {
   try {
     const projects = await prisma.project.findMany({
       where: { userId: req.user.id },

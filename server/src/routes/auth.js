@@ -2,7 +2,12 @@ import { Router } from "express";
 import { z } from "zod";
 import prisma from "../db/prisma.js";
 import { env } from "../config/env.js";
-import { hashPassword, verifyPassword } from "../services/passwords.js";
+import {
+  hashPassword,
+  verifyPassword,
+  validatePasswordStrength,
+  PASSWORD_STRENGTH_MESSAGES,
+} from "../services/passwords.js";
 import {
   SESSION_COOKIE,
   CSRF_COOKIE,
@@ -12,6 +17,10 @@ import {
   csrfCookieOptions,
   issueCsrfToken,
 } from "../services/sessions.js";
+import {
+  TRUSTED_DEVICE_COOKIE,
+  trustedDeviceCookieOptions,
+} from "../services/trustedDevices.js";
 import {
   createResetTokenForEmail,
   consumeResetToken,
@@ -51,6 +60,19 @@ function sessionConfig() {
   };
 }
 
+// Resposta uniforme pra senha fraca — usado em register e reset.
+function rejectWeakPassword(res, password) {
+  const check = validatePasswordStrength(password);
+  if (check.ok) return false;
+  res.status(400).json({
+    error: {
+      code: check.code,
+      message: PASSWORD_STRENGTH_MESSAGES[check.code] || "senha não atende aos requisitos",
+    },
+  });
+  return true;
+}
+
 async function issueAuth(res, { user, keep, req }) {
   const { token } = await createSession({
     userId: user.id,
@@ -66,6 +88,7 @@ router.post("/register", authLimiter, async (req, res, next) => {
   try {
     const { email, password, keep, firstName, lastName } =
       registerSchema.parse(req.body);
+    if (rejectWeakPassword(res, password)) return;
     const existing = await prisma.user.findUnique({ where: { email } });
     if (existing) {
       return res.status(409).json({
@@ -224,6 +247,7 @@ router.post("/forgot", authLimiter, async (req, res, next) => {
 router.post("/reset", authLimiter, async (req, res, next) => {
   try {
     const { token, password } = resetSchema.parse(req.body);
+    if (rejectWeakPassword(res, password)) return;
     await consumeResetToken(token, password);
     res.status(204).end();
   } catch (err) {
@@ -233,6 +257,55 @@ router.post("/reset", authLimiter, async (req, res, next) => {
         error: { code: err.code, message: err.message },
       });
     }
+    if (err?.issues) {
+      return res.status(400).json({
+        error: { code: "invalid_input", message: err.issues[0]?.message || "entrada inválida" },
+      });
+    }
+    next(err);
+  }
+});
+
+// Autoexclusão de conta (LGPD direito ao esquecimento).
+// User com senha local: exige re-confirmação da senha (defesa contra sessão
+// sequestrada / CSRF mesmo com cookie). User só Google (sem passwordHash):
+// não pede senha — sessão ativa basta.
+// Cascade no schema apaga: Prompt, Project, ImprovePreset, UserApiKey,
+// Session, TrustedDevice, MfaSettings, MfaChallenge, PasswordResetToken.
+const deleteMeSchema = z.object({
+  password: z.string().min(1).max(200).optional(),
+});
+
+router.delete("/me", requireUser, async (req, res, next) => {
+  try {
+    const { password } = deleteMeSchema.parse(req.body || {});
+
+    if (req.user.passwordHash) {
+      if (!password) {
+        return res.status(400).json({
+          error: { code: "password_required", message: "senha obrigatória" },
+        });
+      }
+      const ok = await verifyPassword(req.user.passwordHash, password);
+      if (!ok) {
+        return res.status(401).json({
+          error: { code: "invalid_credentials", message: "senha incorreta" },
+        });
+      }
+    }
+
+    await prisma.user.delete({ where: { id: req.user.id } });
+
+    const sessClear = { ...sessionCookieOptions({ keep: false }) };
+    delete sessClear.maxAge;
+    const tdClear = { ...trustedDeviceCookieOptions() };
+    delete tdClear.maxAge;
+    res.clearCookie(SESSION_COOKIE, sessClear);
+    res.clearCookie(CSRF_COOKIE, csrfCookieOptions());
+    res.clearCookie(TRUSTED_DEVICE_COOKIE, tdClear);
+
+    res.status(204).end();
+  } catch (err) {
     if (err?.issues) {
       return res.status(400).json({
         error: { code: "invalid_input", message: err.issues[0]?.message || "entrada inválida" },
