@@ -1,8 +1,8 @@
-import { api, endpoints, ApiError } from "/static/js/api.js?v=20260508c";
-import { sanitizeContent } from "/static/js/sanitize.js?v=20260508c";
-import { startIdleWatcher } from "/static/js/idle.js?v=20260508c";
-import { streamImprove } from "/static/js/improve.js?v=20260508c";
-import { renderWordDiff } from "/static/js/diff.js?v=20260508c";
+import { api, endpoints, ApiError } from "/static/js/api.js?v=20260515a";
+import { sanitizeContent } from "/static/js/sanitize.js?v=20260515a";
+import { startIdleWatcher } from "/static/js/idle.js?v=20260515a";
+import { streamImprove } from "/static/js/improve.js?v=20260515a";
+import { renderWordDiff } from "/static/js/diff.js?v=20260515a";
 
 const THEME_KEY = "prompts_theme";
 const LEGACY_STORAGE_KEY = "prompts_storage";
@@ -109,6 +109,11 @@ const elements = {
   legacyBannerText: document.getElementById("legacy-banner-text"),
   legacyImport: document.getElementById("legacy-import"),
   legacyDiscard: document.getElementById("legacy-discard"),
+  btnFile: document.getElementById("btn-file"),
+  filePopover: document.getElementById("file-popover"),
+  fileImportInput: document.getElementById("file-import-input"),
+  editor: document.querySelector(".editor"),
+  editorDrop: document.getElementById("editor-drop"),
   projectsList: document.getElementById("projects-list"),
   btnAddProject: document.getElementById("btn-add-project"),
   projectsNew: document.getElementById("projects-new"),
@@ -1682,6 +1687,344 @@ async function copySelected() {
   }
 }
 
+/* --------------------------------------------------------------------------
+   Import / Export — .txt / .md
+
+   Conversor pequeno mão-de-obra. Não é parser completo de Markdown — cobre só
+   o subset que o editor consegue representar (mesmas tags do sanitize:
+   p, h1-h4, ul/ol/li, pre/code, blockquote, strong/em/s, br). Fora disso o
+   texto vira parágrafo plano. Mais simples e previsível que linkar um lib.
+   -------------------------------------------------------------------------- */
+
+const FILE_IMPORT_MAX_BYTES = 1024 * 1024; // 1 MiB
+
+function escapeMdInline(text) {
+  return String(text).replace(/[&<>]/g, (ch) => (
+    ch === "&" ? "&amp;" : ch === "<" ? "&lt;" : "&gt;"
+  ));
+}
+
+function inlineMdToHtml(text) {
+  let out = escapeMdInline(text);
+  // Inline code primeiro pra proteger conteúdo de outros marcadores.
+  out = out.replace(/`([^`\n]+)`/g, "<code>$1</code>");
+  out = out.replace(/\*\*([^*\n]+)\*\*/g, "<strong>$1</strong>");
+  out = out.replace(/__([^_\n]+)__/g, "<strong>$1</strong>");
+  out = out.replace(/(^|[^*\w])\*([^*\n]+)\*(?!\*)/g, "$1<em>$2</em>");
+  out = out.replace(/(^|[^_\w])_([^_\n]+)_(?!_)/g, "$1<em>$2</em>");
+  out = out.replace(/~~([^~\n]+)~~/g, "<s>$1</s>");
+  return out;
+}
+
+function mdToHtml(md) {
+  const lines = String(md).replace(/\r\n?/g, "\n").split("\n");
+  const blocks = [];
+  let i = 0;
+
+  while (i < lines.length) {
+    const line = lines[i];
+
+    // Fenced code block — ```lang opcional, fechado por ``` em linha própria.
+    const fence = line.match(/^```/);
+    if (fence) {
+      const codeLines = [];
+      i++;
+      while (i < lines.length && !/^```/.test(lines[i])) {
+        codeLines.push(lines[i]);
+        i++;
+      }
+      if (i < lines.length) i++; // consome fechamento
+      blocks.push(`<pre>${escapeMdInline(codeLines.join("\n"))}</pre>`);
+      continue;
+    }
+
+    // Heading ATX (#, ##, ###, ####).
+    const h = line.match(/^(#{1,4})\s+(.+?)\s*#*\s*$/);
+    if (h) {
+      const lvl = h[1].length;
+      blocks.push(`<h${lvl}>${inlineMdToHtml(h[2])}</h${lvl}>`);
+      i++;
+      continue;
+    }
+
+    // Blockquote — uma ou mais linhas iniciadas por ">".
+    if (/^>\s?/.test(line)) {
+      const qLines = [];
+      while (i < lines.length && /^>\s?/.test(lines[i])) {
+        qLines.push(lines[i].replace(/^>\s?/, ""));
+        i++;
+      }
+      blocks.push(`<blockquote>${inlineMdToHtml(qLines.join(" "))}</blockquote>`);
+      continue;
+    }
+
+    // Lista não-ordenada: -, *, +.
+    if (/^[-*+]\s+/.test(line)) {
+      const items = [];
+      while (i < lines.length && /^[-*+]\s+/.test(lines[i])) {
+        items.push(`<li>${inlineMdToHtml(lines[i].replace(/^[-*+]\s+/, ""))}</li>`);
+        i++;
+      }
+      blocks.push(`<ul>${items.join("")}</ul>`);
+      continue;
+    }
+
+    // Lista ordenada: "1. ", "12. " etc.
+    if (/^\d+\.\s+/.test(line)) {
+      const items = [];
+      while (i < lines.length && /^\d+\.\s+/.test(lines[i])) {
+        items.push(`<li>${inlineMdToHtml(lines[i].replace(/^\d+\.\s+/, ""))}</li>`);
+        i++;
+      }
+      blocks.push(`<ol>${items.join("")}</ol>`);
+      continue;
+    }
+
+    // Linha vazia separa parágrafos.
+    if (line.trim() === "") {
+      i++;
+      continue;
+    }
+
+    // Parágrafo — consome linhas até bater em algo estrutural.
+    const pLines = [];
+    while (
+      i < lines.length &&
+      lines[i].trim() !== "" &&
+      !/^(#{1,4}\s|>\s?|[-*+]\s+|\d+\.\s+|```)/.test(lines[i])
+    ) {
+      pLines.push(lines[i]);
+      i++;
+    }
+    blocks.push(`<p>${inlineMdToHtml(pLines.join(" "))}</p>`);
+  }
+
+  return blocks.join("");
+}
+
+function txtToHtml(text) {
+  // .txt: \n\n separa parágrafos, \n vira <br>. Cada parágrafo é escapado.
+  return String(text)
+    .replace(/\r\n?/g, "\n")
+    .split(/\n\s*\n/)
+    .map((p) => p.trim())
+    .filter(Boolean)
+    .map((p) => `<p>${escapeMdInline(p).split("\n").join("<br>")}</p>`)
+    .join("");
+}
+
+function htmlNodesToMd(nodes) {
+  let out = "";
+  for (const node of nodes) out += htmlNodeToMd(node);
+  return out;
+}
+
+function htmlNodeToMd(node) {
+  if (node.nodeType === Node.TEXT_NODE) {
+    return node.textContent;
+  }
+  if (node.nodeType !== Node.ELEMENT_NODE) return "";
+
+  const tag = node.tagName.toLowerCase();
+  const inner = () => htmlNodesToMd(node.childNodes);
+
+  switch (tag) {
+    case "h1": return `# ${inner().trim()}\n\n`;
+    case "h2": return `## ${inner().trim()}\n\n`;
+    case "h3": return `### ${inner().trim()}\n\n`;
+    case "h4": return `#### ${inner().trim()}\n\n`;
+    case "p":
+    case "div": {
+      const t = inner();
+      return t.trim() ? `${t}\n\n` : "";
+    }
+    case "br": return "  \n";
+    case "b":
+    case "strong": {
+      const t = inner().trim();
+      return t ? `**${t}**` : "";
+    }
+    case "i":
+    case "em": {
+      const t = inner().trim();
+      return t ? `*${t}*` : "";
+    }
+    case "u": {
+      const t = inner().trim();
+      return t ? `__${t}__` : "";
+    }
+    case "s": {
+      const t = inner().trim();
+      return t ? `~~${t}~~` : "";
+    }
+    case "code": {
+      // <code> dentro de <pre> é tratado pelo case do pai — aqui é inline.
+      if (node.parentElement && node.parentElement.tagName === "PRE") return inner();
+      const t = inner();
+      return t ? `\`${t}\`` : "";
+    }
+    case "pre": {
+      return `\`\`\`\n${node.textContent.replace(/\n+$/, "")}\n\`\`\`\n\n`;
+    }
+    case "blockquote": {
+      const body = inner().trim();
+      const lines = body.split("\n").map((l) => `> ${l}`).join("\n");
+      return `${lines}\n\n`;
+    }
+    case "ul": {
+      let out = "";
+      for (const li of node.children) {
+        if (li.tagName !== "LI") continue;
+        out += `- ${htmlNodesToMd(li.childNodes).trim().replace(/\n+/g, " ")}\n`;
+      }
+      return `${out}\n`;
+    }
+    case "ol": {
+      let out = "";
+      let n = 1;
+      for (const li of node.children) {
+        if (li.tagName !== "LI") continue;
+        out += `${n}. ${htmlNodesToMd(li.childNodes).trim().replace(/\n+/g, " ")}\n`;
+        n++;
+      }
+      return `${out}\n`;
+    }
+    default:
+      // span, li (não devia chegar aqui direto), outros — só recursão.
+      return inner();
+  }
+}
+
+function htmlToMd(html) {
+  const root = document.createElement("div");
+  root.innerHTML = sanitizeContent(html);
+  const md = htmlNodesToMd(root.childNodes);
+  // Colapsa runs de >2 linhas vazias e remove espaço em branco no final.
+  return md.replace(/\n{3,}/g, "\n\n").replace(/[ \t]+\n/g, "\n").trim();
+}
+
+function slugifyFilename(title) {
+  const slug = String(title || "")
+    .trim()
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, "")
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "")
+    .slice(0, 60);
+  return slug || "prompt";
+}
+
+function downloadBlob(filename, content, mime) {
+  const blob = new Blob([content], { type: mime });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+async function handleFileImport(file) {
+  if (!file) return;
+  const name = file.name || "";
+  const lower = name.toLowerCase();
+  const isMd = lower.endsWith(".md");
+  const isTxt = lower.endsWith(".txt");
+  if (!isMd && !isTxt) {
+    toast({ message: "tipo inválido — apenas .txt / .md", variant: "error" });
+    return;
+  }
+  if (file.size > FILE_IMPORT_MAX_BYTES) {
+    toast({ message: "arquivo muito grande — limite 1 MiB", variant: "error" });
+    return;
+  }
+
+  const currentTitle = elements.promptTitle.textContent.trim();
+  const currentText = elements.promptContent.textContent.trim();
+  if (currentTitle || currentText) {
+    // confirm() nativo é OK aqui — substituição é destrutiva e desfazer é
+    // trivial (não salva sozinho), então não vale criar um modal próprio.
+    if (!window.confirm("Substituir o conteúdo atual pelo arquivo?")) return;
+  }
+
+  let raw;
+  try {
+    raw = await file.text();
+  } catch {
+    toast({ message: "falha ao ler arquivo", variant: "error" });
+    return;
+  }
+
+  const html = isMd ? mdToHtml(raw) : txtToHtml(raw);
+  const titleFromFile = name.replace(/\.(txt|md)$/i, "").trim() || "Importado";
+
+  state.selectedId = null;
+  elements.promptTitle.textContent = titleFromFile;
+  elements.promptContent.innerHTML = sanitizeContent(html);
+  updateAllEditableStates();
+  renderList(elements.search.value);
+  updateMainMeta();
+  updateImproveButtonState();
+
+  toast({
+    messageHtml: `<strong>importado</strong> <span class="hash">${escapeHtml(name)}</span>`,
+  });
+}
+
+function handleFileExport() {
+  const title = elements.promptTitle.textContent.trim();
+  const contentHtml = elements.promptContent.innerHTML;
+  const hasText = elements.promptContent.textContent.trim();
+  if (!title && !hasText) {
+    toast({ message: "vazio — nada para exportar" });
+    return;
+  }
+
+  const safeTitle = title || "Prompt sem título";
+  const body = htmlToMd(contentHtml);
+  // Header com o título como h1 — facilita identificar o arquivo depois.
+  const md = `# ${safeTitle}\n\n${body}\n`.replace(/\n{3,}/g, "\n\n");
+
+  downloadBlob(`${slugifyFilename(safeTitle)}.md`, md, "text/markdown;charset=utf-8");
+  toast({
+    messageHtml: `<strong>exportado</strong> <span class="hash">${escapeHtml(safeTitle)}.md</span>`,
+  });
+}
+
+function openFilePopover() {
+  elements.filePopover.hidden = false;
+  elements.btnFile.setAttribute("aria-expanded", "true");
+  document.addEventListener("click", onDocClickForFilePopover, true);
+  document.addEventListener("keydown", onEscForFilePopover);
+}
+
+function closeFilePopover() {
+  elements.filePopover.hidden = true;
+  elements.btnFile.setAttribute("aria-expanded", "false");
+  document.removeEventListener("click", onDocClickForFilePopover, true);
+  document.removeEventListener("keydown", onEscForFilePopover);
+}
+
+function onDocClickForFilePopover(ev) {
+  if (elements.filePopover.hidden) return;
+  if (
+    elements.filePopover.contains(ev.target) ||
+    elements.btnFile.contains(ev.target)
+  ) {
+    return;
+  }
+  closeFilePopover();
+}
+
+function onEscForFilePopover(ev) {
+  if (ev.key === "Escape") closeFilePopover();
+}
+
 async function logout() {
   try {
     await endpoints.logout();
@@ -2353,6 +2696,78 @@ function bindEvents() {
   elements.btnSave.addEventListener("click", save);
   elements.btnNew.addEventListener("click", newPrompt);
   elements.btnCopy.addEventListener("click", copySelected);
+
+  // Botão "Arquivo" — abre popover com Importar / Exportar. Mesma mecânica
+  // do improve-popover (doc click + Esc fecham).
+  elements.btnFile.addEventListener("click", (ev) => {
+    ev.stopPropagation();
+    if (elements.filePopover.hidden) openFilePopover();
+    else closeFilePopover();
+  });
+  elements.filePopover.addEventListener("click", (ev) => {
+    const opt = ev.target.closest(".file-popover-option");
+    if (!opt) return;
+    const action = opt.dataset.action;
+    closeFilePopover();
+    if (action === "import") {
+      // Reset do value pra permitir importar o mesmo arquivo duas vezes seguidas.
+      elements.fileImportInput.value = "";
+      elements.fileImportInput.click();
+    } else if (action === "export") {
+      handleFileExport();
+    }
+  });
+  elements.fileImportInput.addEventListener("change", (ev) => {
+    const file = ev.target.files && ev.target.files[0];
+    if (file) handleFileImport(file);
+    ev.target.value = "";
+  });
+
+  // Drag-and-drop de arquivo sobre o editor. dragCounter pra não esconder o
+  // overlay quando o ponteiro cruza fronteiras de filhos (dragleave dispara
+  // a cada elemento aninhado que sai). Aceita só drags que contenham "Files"
+  // — assim drags de prompt/projeto internos não acendem o overlay.
+  let fileDragCounter = 0;
+  const hasFilePayload = (ev) =>
+    ev.dataTransfer && Array.from(ev.dataTransfer.types || []).includes("Files");
+
+  elements.editor.addEventListener("dragenter", (ev) => {
+    if (!hasFilePayload(ev)) return;
+    fileDragCounter++;
+    elements.editor.classList.add("is-file-drop");
+    elements.editorDrop.setAttribute("aria-hidden", "false");
+  });
+  elements.editor.addEventListener("dragleave", (ev) => {
+    if (!hasFilePayload(ev)) return;
+    fileDragCounter = Math.max(0, fileDragCounter - 1);
+    if (fileDragCounter === 0) {
+      elements.editor.classList.remove("is-file-drop");
+      elements.editorDrop.setAttribute("aria-hidden", "true");
+    }
+  });
+  elements.editor.addEventListener("dragover", (ev) => {
+    if (!hasFilePayload(ev)) return;
+    ev.preventDefault();
+    ev.dataTransfer.dropEffect = "copy";
+  });
+  elements.editor.addEventListener("drop", (ev) => {
+    if (!hasFilePayload(ev)) return;
+    ev.preventDefault();
+    fileDragCounter = 0;
+    elements.editor.classList.remove("is-file-drop");
+    elements.editorDrop.setAttribute("aria-hidden", "true");
+    const file = ev.dataTransfer.files && ev.dataTransfer.files[0];
+    if (file) handleFileImport(file);
+  });
+
+  // Drop em qualquer outro lugar do app: previne o browser de abrir o arquivo
+  // como se fosse uma página (default destrói o estado da SPA).
+  window.addEventListener("dragover", (ev) => {
+    if (hasFilePayload(ev)) ev.preventDefault();
+  });
+  window.addEventListener("drop", (ev) => {
+    if (hasFilePayload(ev)) ev.preventDefault();
+  });
   elements.btnCollapse.addEventListener("click", closeSidebar);
   elements.btnOpen.addEventListener("click", openSidebar);
   elements.sidebarBackdrop.addEventListener("click", closeSidebar);

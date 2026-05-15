@@ -10,7 +10,7 @@
     <meta name="theme-color" content="oklch(18% 0.011 250)" media="(prefers-color-scheme: dark)" />
     <meta name="theme-color" content="oklch(97% 0.005 250)" media="(prefers-color-scheme: light)" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg?v=3" sizes="any" />
-    <link rel="stylesheet" href="/static/css/style.css?v=20260508c" />
+    <link rel="stylesheet" href="/static/css/style.css?v=20260515a" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -191,6 +191,29 @@
             <button type="button" class="btn-ghost" id="btn-copy">
               Copiar
             </button>
+            <div class="file-wrap">
+              <button type="button" class="btn-ghost" id="btn-file" aria-haspopup="menu" aria-expanded="false">
+                Arquivo
+              </button>
+              <div class="file-popover" id="file-popover" role="menu" hidden>
+                <p class="file-popover-hint">// arquivo</p>
+                <button type="button" class="file-popover-option" role="menuitem" data-action="import">
+                  <span class="file-opt-prefix" aria-hidden="true">❯</span>
+                  <span class="file-opt-label">Importar .txt / .md</span>
+                </button>
+                <button type="button" class="file-popover-option" role="menuitem" data-action="export">
+                  <span class="file-opt-prefix" aria-hidden="true">❯</span>
+                  <span class="file-opt-label">Exportar como .md</span>
+                </button>
+                <p class="file-popover-foot" aria-hidden="true">// arraste o arquivo no editor</p>
+              </div>
+            </div>
+            <input
+              type="file"
+              id="file-import-input"
+              accept=".txt,.md,text/plain,text/markdown"
+              hidden
+            />
             <div class="improve-wrap">
               <button type="button" class="btn-ghost" id="btn-improve" disabled>
                 Melhorar
@@ -245,6 +268,12 @@
               class="prompt-content"
               contenteditable="true"
             ></div>
+          </div>
+          <div class="editor-drop" id="editor-drop" aria-hidden="true">
+            <div class="editor-drop-card">
+              <span class="editor-drop-prefix" aria-hidden="true">$</span>
+              <span class="editor-drop-text">solte para importar .txt / .md</span>
+            </div>
           </div>
         </article>
 
@@ -360,6 +389,6 @@
       </div>
     </div>
 
-    <script type="module" src="/static/js/scripts.js?v=20260508c"></script>
+    <script type="module" src="/static/js/scripts.js?v=20260515a"></script>
   </body>
 </html>

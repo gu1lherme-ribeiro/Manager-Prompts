@@ -1392,6 +1392,7 @@ body {
 
 /* Editor -------------------------------------------------------------- */
 .editor {
+  position: relative;
   display: flex;
   flex-direction: column;
   gap: var(--space-lg);
@@ -2878,16 +2879,19 @@ body.drawer-open .main {
     justify-content: center;
   }
 
-  .improve-wrap {
+  .improve-wrap,
+  .file-wrap {
     flex: 1;
   }
 
-  .improve-wrap > .btn-ghost {
+  .improve-wrap > .btn-ghost,
+  .file-wrap > .btn-ghost {
     width: 100%;
   }
 
   /* Popover ancora-se ao botão mas precisa caber na tela */
-  .improve-popover {
+  .improve-popover,
+  .file-popover {
     right: 0;
     left: 0;
     min-width: 0;
@@ -3787,6 +3791,150 @@ body.drawer-open .main {
 }
 
 /* --------------------------------------------------------------------------
+   Botão "arquivo" + popover (Importar / Exportar) + overlay de drop
+
+   Espelha a estrutura do improve-popover. Vocabulário visual idêntico
+   (caret ❯, monospace, hairline rules) pra manter coerência da chrome.
+   -------------------------------------------------------------------------- */
+
+.file-wrap {
+  position: relative;
+  display: inline-flex;
+}
+
+.file-popover {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  min-width: 220px;
+  padding: var(--space-2xs);
+  background: var(--bg-elev);
+  border: 1px solid var(--rule-strong);
+  border-radius: 4px;
+  box-shadow: var(--shadow-card);
+  font-family: var(--font-mono);
+  font-size: var(--fs-sm);
+}
+
+.file-popover-hint {
+  color: var(--ink-4);
+  padding: var(--space-xs) var(--space-sm) var(--space-2xs);
+  margin: 0 0 var(--space-2xs);
+  font-size: var(--fs-xs);
+  letter-spacing: 0.01em;
+  border-bottom: 1px solid var(--rule);
+}
+
+.file-popover-option {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  column-gap: var(--space-sm);
+  align-items: center;
+  padding: 6px var(--space-sm);
+  background: transparent;
+  border: 0;
+  border-radius: 3px;
+  font-family: inherit;
+  font-size: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    background-color var(--dur-fast) var(--ease-out-quart),
+    color var(--dur-fast) var(--ease-out-quart);
+}
+
+.file-popover-option:hover {
+  background: var(--bg-hover);
+}
+
+.file-popover-option:focus-visible {
+  outline: 1px solid var(--accent);
+  outline-offset: -1px;
+  background: var(--bg-hover);
+}
+
+.file-opt-prefix {
+  color: var(--ink-4);
+}
+
+.file-popover-option:hover .file-opt-prefix {
+  color: var(--accent);
+}
+
+.file-opt-label {
+  color: var(--ink-2);
+}
+
+.file-popover-option:hover .file-opt-label {
+  color: var(--ink-1);
+}
+
+.file-popover-foot {
+  margin: var(--space-2xs) 0 0;
+  padding: var(--space-xs) var(--space-sm) calc(var(--space-2xs) + 2px);
+  border-top: 1px solid var(--rule);
+  font-family: inherit;
+  font-size: var(--fs-xs);
+  letter-spacing: 0.01em;
+  color: var(--ink-4);
+}
+
+/* Overlay que aparece quando um arquivo é arrastado sobre o editor.
+   Fica sobre o conteúdo (pointer-events: none) pra não interceptar o drop —
+   só sinaliza visualmente. */
+.editor-drop {
+  position: absolute;
+  inset: -8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  border: 1px dashed transparent;
+  border-radius: 6px;
+  background: transparent;
+  opacity: 0;
+  transition:
+    opacity var(--dur-fast) var(--ease-out-quart),
+    border-color var(--dur-fast) var(--ease-out-quart),
+    background-color var(--dur-fast) var(--ease-out-quart);
+  z-index: 5;
+}
+
+.editor.is-file-drop .editor-drop {
+  opacity: 1;
+  border-color: var(--accent);
+  background: color-mix(in oklch, var(--bg-elev) 80%, var(--accent) 20%);
+  /* fallback pra browsers sem color-mix */
+  background: var(--bg-elev);
+}
+
+.editor-drop-card {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-sm) var(--space-lg);
+  background: var(--bg-elev);
+  border: 1px solid var(--accent);
+  border-radius: 4px;
+  font-family: var(--font-mono);
+  font-size: var(--fs-sm);
+  color: var(--ink-1);
+  box-shadow: var(--shadow-card);
+}
+
+.editor-drop-prefix {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.editor-drop-text {
+  letter-spacing: 0.005em;
+}
+
+/* --------------------------------------------------------------------------
    Slash menu — comandos básicos no editor (estilo Notion / Raycast)
    -------------------------------------------------------------------------- */
 
@@ -4562,6 +4710,8 @@ body.drawer-open .main {
   .legacy-banner,
   .improve-overlay,
   .improve-popover,
+  .file-popover,
+  .editor-drop,
   .auth-aside,
   .settings-head,
   .settings-actions {
