@@ -3881,30 +3881,32 @@ body.drawer-open .main {
   color: var(--ink-4);
 }
 
-/* Overlay full-viewport: aparece quando um arquivo é arrastado sobre o app.
-   Fica fixed por cima de tudo mas sem interceptar pointer events — quem
-   recebe o drop é o window listener no JS, não o overlay. Usar pointer-events
-   none é o que permite o dragover continuar disparando até o drop. */
+/* Overlay escopado ao .main: posicionado fixed mas com top/left/width/height
+   setados via JS pra casar com o bounding rect do .main (assim segue o
+   estado da sidebar sem hardcode de largura). pointer-events: none é o que
+   permite o dragover seguir disparando até o drop — quem recebe o evento é
+   o listener no .main, não o overlay. */
 .file-drop-overlay {
   position: fixed;
-  inset: 0;
   display: flex;
   align-items: center;
   justify-content: center;
   pointer-events: none;
-  background: color-mix(in oklch, var(--bg) 70%, transparent);
-  /* fallback pra browsers sem color-mix */
   background: rgba(0, 0, 0, 0.45);
   opacity: 0;
-  transition: opacity var(--dur-fast) var(--ease-out-quart);
+  visibility: hidden;
+  transition:
+    opacity var(--dur-fast) var(--ease-out-quart),
+    visibility var(--dur-fast) var(--ease-out-quart);
   z-index: 60;
 }
 
 body.is-file-drop .file-drop-overlay {
   opacity: 1;
+  visibility: visible;
 }
 
-/* Borda dashed âmbar percorrendo toda a viewport — reforça "drop zone". */
+/* Borda dashed âmbar ao redor da área alvo — reforça "drop zone aqui". */
 body.is-file-drop .file-drop-overlay::before {
   content: "";
   position: absolute;

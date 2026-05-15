@@ -113,6 +113,7 @@ const elements = {
   filePopover: document.getElementById("file-popover"),
   fileImportInput: document.getElementById("file-import-input"),
   editor: document.querySelector(".editor"),
+  main: document.querySelector(".main"),
   editorDrop: document.getElementById("editor-drop"),
   projectsList: document.getElementById("projects-list"),
   btnAddProject: document.getElementById("btn-add-project"),
@@ -2723,15 +2724,30 @@ function bindEvents() {
     ev.target.value = "";
   });
 
-  // Drag-and-drop de arquivo em qualquer ponto da viewport. dragCounter
-  // pra não piscar o overlay quando o ponteiro cruza fronteiras de elementos
-  // (dragleave dispara a cada filho que o ponteiro sai). Aceita só drags com
-  // payload "Files" — drags internos de prompt/projeto não acendem o overlay.
+  // Drag-and-drop de arquivo escopado ao .main (área do editor) — sidebar
+  // fica de fora pra não conflitar com o drag interno de prompts/projetos.
+  // dragCounter no .main pra não piscar o overlay quando o ponteiro cruza
+  // fronteiras de filhos (dragleave dispara em cada elemento aninhado).
+  // window também escuta dragover/drop pra preventDefault em qualquer ponto
+  // (sem isso, soltar fora do .main faria o browser navegar pro arquivo).
   let fileDragCounter = 0;
   const hasFilePayload = (ev) =>
     ev.dataTransfer && Array.from(ev.dataTransfer.types || []).includes("Files");
 
+  const positionDropOverlay = () => {
+    // Overlay é position: fixed; usa o bounding rect do .main pra cobrir
+    // exatamente a área alvo, levando em conta sidebar colapsada/expandida
+    // sem precisar conhecer a largura dela.
+    const r = elements.main.getBoundingClientRect();
+    const o = elements.editorDrop.style;
+    o.top = `${r.top}px`;
+    o.left = `${r.left}px`;
+    o.width = `${r.width}px`;
+    o.height = `${r.height}px`;
+  };
+
   const showFileDrop = () => {
+    positionDropOverlay();
     document.body.classList.add("is-file-drop");
     elements.editorDrop.setAttribute("aria-hidden", "false");
   };
@@ -2741,34 +2757,44 @@ function bindEvents() {
     elements.editorDrop.setAttribute("aria-hidden", "true");
   };
 
-  window.addEventListener("dragenter", (ev) => {
+  elements.main.addEventListener("dragenter", (ev) => {
     if (!hasFilePayload(ev)) return;
     fileDragCounter++;
     if (fileDragCounter === 1) showFileDrop();
   });
-  window.addEventListener("dragleave", (ev) => {
+  elements.main.addEventListener("dragleave", (ev) => {
     if (!hasFilePayload(ev)) return;
-    // relatedTarget null = ponteiro saiu da viewport: força reset.
-    if (!ev.relatedTarget) {
-      hideFileDrop();
-      return;
-    }
     fileDragCounter = Math.max(0, fileDragCounter - 1);
     if (fileDragCounter === 0) hideFileDrop();
   });
-  window.addEventListener("dragover", (ev) => {
+  elements.main.addEventListener("dragover", (ev) => {
     if (!hasFilePayload(ev)) return;
-    // preventDefault aqui é o que impede o browser de navegar pro arquivo
-    // quando o drop acontece fora do editor (default destrói o estado da SPA).
     ev.preventDefault();
     ev.dataTransfer.dropEffect = "copy";
   });
-  window.addEventListener("drop", (ev) => {
+  elements.main.addEventListener("drop", (ev) => {
     if (!hasFilePayload(ev)) return;
     ev.preventDefault();
     hideFileDrop();
     const file = ev.dataTransfer.files && ev.dataTransfer.files[0];
     if (file) handleFileImport(file);
+  });
+
+  // Fallback global: previne o browser de abrir o arquivo se o user soltar
+  // fora do .main (sidebar, ou viewport quando o drag sai da área sem drop).
+  window.addEventListener("dragover", (ev) => {
+    if (hasFilePayload(ev)) ev.preventDefault();
+  });
+  window.addEventListener("drop", (ev) => {
+    if (hasFilePayload(ev)) {
+      ev.preventDefault();
+      hideFileDrop();
+    }
+  });
+  // Sai da viewport mid-drag: zera contador e esconde overlay (sem isso fica
+  // travado se o user solta o arquivo fora da janela).
+  window.addEventListener("dragleave", (ev) => {
+    if (!ev.relatedTarget && hasFilePayload(ev)) hideFileDrop();
   });
   elements.btnCollapse.addEventListener("click", closeSidebar);
   elements.btnOpen.addEventListener("click", openSidebar);
