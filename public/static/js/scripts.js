@@ -2723,50 +2723,52 @@ function bindEvents() {
     ev.target.value = "";
   });
 
-  // Drag-and-drop de arquivo sobre o editor. dragCounter pra não esconder o
-  // overlay quando o ponteiro cruza fronteiras de filhos (dragleave dispara
-  // a cada elemento aninhado que sai). Aceita só drags que contenham "Files"
-  // — assim drags de prompt/projeto internos não acendem o overlay.
+  // Drag-and-drop de arquivo em qualquer ponto da viewport. dragCounter
+  // pra não piscar o overlay quando o ponteiro cruza fronteiras de elementos
+  // (dragleave dispara a cada filho que o ponteiro sai). Aceita só drags com
+  // payload "Files" — drags internos de prompt/projeto não acendem o overlay.
   let fileDragCounter = 0;
   const hasFilePayload = (ev) =>
     ev.dataTransfer && Array.from(ev.dataTransfer.types || []).includes("Files");
 
-  elements.editor.addEventListener("dragenter", (ev) => {
+  const showFileDrop = () => {
+    document.body.classList.add("is-file-drop");
+    elements.editorDrop.setAttribute("aria-hidden", "false");
+  };
+  const hideFileDrop = () => {
+    fileDragCounter = 0;
+    document.body.classList.remove("is-file-drop");
+    elements.editorDrop.setAttribute("aria-hidden", "true");
+  };
+
+  window.addEventListener("dragenter", (ev) => {
     if (!hasFilePayload(ev)) return;
     fileDragCounter++;
-    elements.editor.classList.add("is-file-drop");
-    elements.editorDrop.setAttribute("aria-hidden", "false");
+    if (fileDragCounter === 1) showFileDrop();
   });
-  elements.editor.addEventListener("dragleave", (ev) => {
+  window.addEventListener("dragleave", (ev) => {
     if (!hasFilePayload(ev)) return;
-    fileDragCounter = Math.max(0, fileDragCounter - 1);
-    if (fileDragCounter === 0) {
-      elements.editor.classList.remove("is-file-drop");
-      elements.editorDrop.setAttribute("aria-hidden", "true");
+    // relatedTarget null = ponteiro saiu da viewport: força reset.
+    if (!ev.relatedTarget) {
+      hideFileDrop();
+      return;
     }
+    fileDragCounter = Math.max(0, fileDragCounter - 1);
+    if (fileDragCounter === 0) hideFileDrop();
   });
-  elements.editor.addEventListener("dragover", (ev) => {
+  window.addEventListener("dragover", (ev) => {
     if (!hasFilePayload(ev)) return;
+    // preventDefault aqui é o que impede o browser de navegar pro arquivo
+    // quando o drop acontece fora do editor (default destrói o estado da SPA).
     ev.preventDefault();
     ev.dataTransfer.dropEffect = "copy";
   });
-  elements.editor.addEventListener("drop", (ev) => {
+  window.addEventListener("drop", (ev) => {
     if (!hasFilePayload(ev)) return;
     ev.preventDefault();
-    fileDragCounter = 0;
-    elements.editor.classList.remove("is-file-drop");
-    elements.editorDrop.setAttribute("aria-hidden", "true");
+    hideFileDrop();
     const file = ev.dataTransfer.files && ev.dataTransfer.files[0];
     if (file) handleFileImport(file);
-  });
-
-  // Drop em qualquer outro lugar do app: previne o browser de abrir o arquivo
-  // como se fosse uma página (default destrói o estado da SPA).
-  window.addEventListener("dragover", (ev) => {
-    if (hasFilePayload(ev)) ev.preventDefault();
-  });
-  window.addEventListener("drop", (ev) => {
-    if (hasFilePayload(ev)) ev.preventDefault();
   });
   elements.btnCollapse.addEventListener("click", closeSidebar);
   elements.btnOpen.addEventListener("click", openSidebar);

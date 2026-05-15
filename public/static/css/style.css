@@ -1392,7 +1392,6 @@ body {
 
 /* Editor -------------------------------------------------------------- */
 .editor {
-  position: relative;
   display: flex;
   flex-direction: column;
   gap: var(--space-lg);
@@ -3882,55 +3881,65 @@ body.drawer-open .main {
   color: var(--ink-4);
 }
 
-/* Overlay que aparece quando um arquivo é arrastado sobre o editor.
-   Fica sobre o conteúdo (pointer-events: none) pra não interceptar o drop —
-   só sinaliza visualmente. */
-.editor-drop {
-  position: absolute;
-  inset: -8px;
+/* Overlay full-viewport: aparece quando um arquivo é arrastado sobre o app.
+   Fica fixed por cima de tudo mas sem interceptar pointer events — quem
+   recebe o drop é o window listener no JS, não o overlay. Usar pointer-events
+   none é o que permite o dragover continuar disparando até o drop. */
+.file-drop-overlay {
+  position: fixed;
+  inset: 0;
   display: flex;
   align-items: center;
   justify-content: center;
   pointer-events: none;
-  border: 1px dashed transparent;
-  border-radius: 6px;
-  background: transparent;
-  opacity: 0;
-  transition:
-    opacity var(--dur-fast) var(--ease-out-quart),
-    border-color var(--dur-fast) var(--ease-out-quart),
-    background-color var(--dur-fast) var(--ease-out-quart);
-  z-index: 5;
-}
-
-.editor.is-file-drop .editor-drop {
-  opacity: 1;
-  border-color: var(--accent);
-  background: color-mix(in oklch, var(--bg-elev) 80%, var(--accent) 20%);
+  background: color-mix(in oklch, var(--bg) 70%, transparent);
   /* fallback pra browsers sem color-mix */
-  background: var(--bg-elev);
+  background: rgba(0, 0, 0, 0.45);
+  opacity: 0;
+  transition: opacity var(--dur-fast) var(--ease-out-quart);
+  z-index: 60;
 }
 
-.editor-drop-card {
+body.is-file-drop .file-drop-overlay {
+  opacity: 1;
+}
+
+/* Borda dashed âmbar percorrendo toda a viewport — reforça "drop zone". */
+body.is-file-drop .file-drop-overlay::before {
+  content: "";
+  position: absolute;
+  inset: var(--space-md);
+  border: 1.5px dashed var(--accent);
+  border-radius: 6px;
+  pointer-events: none;
+}
+
+.file-drop-card {
   display: inline-flex;
   align-items: center;
   gap: var(--space-sm);
-  padding: var(--space-sm) var(--space-lg);
+  padding: var(--space-md) var(--space-xl);
   background: var(--bg-elev);
   border: 1px solid var(--accent);
   border-radius: 4px;
   font-family: var(--font-mono);
-  font-size: var(--fs-sm);
+  font-size: var(--fs-md);
   color: var(--ink-1);
   box-shadow: var(--shadow-card);
+  transform: translateY(4px);
+  transition: transform var(--dur-fast) var(--ease-out-quart);
 }
 
-.editor-drop-prefix {
+body.is-file-drop .file-drop-card {
+  transform: translateY(0);
+}
+
+.file-drop-prefix {
   color: var(--accent);
   font-weight: 600;
 }
 
-.editor-drop-text {
+.file-drop-text {
   letter-spacing: 0.005em;
 }
 
@@ -4711,7 +4720,7 @@ body.drawer-open .main {
   .improve-overlay,
   .improve-popover,
   .file-popover,
-  .editor-drop,
+  .file-drop-overlay,
   .auth-aside,
   .settings-head,
   .settings-actions {
