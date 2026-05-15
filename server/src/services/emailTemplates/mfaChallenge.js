@@ -29,11 +29,11 @@ function capitalizeFirst(s) {
   return t.charAt(0).toUpperCase() + t.slice(1).toLowerCase();
 }
 
-// Formato "XXX XXX" — espaço entre grupos de 3 reduz erro de cópia.
+// Código retornado como 6 dígitos contínuos. Separação visual fica por conta
+// do `letter-spacing` no CTA — colar "482 917" num input com maxlength=6
+// truncava o último dígito porque o espaço ocupava um slot.
 function formatCode(code) {
-  const s = String(code ?? "").replace(/\D/g, "");
-  if (s.length !== 6) return s;
-  return `${s.slice(0, 3)} ${s.slice(3)}`;
+  return String(code ?? "").replace(/\D/g, "");
 }
 
 /**
